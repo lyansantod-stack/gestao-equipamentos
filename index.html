@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Acompanhamento de Equipamentos - Gestão por Exceção</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .smooth-transition { transition: all 0.2s ease-in-out; }
+    .badge-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased font-sans min-h-screen">
+
+  <!-- TOP HEADER & CONTROLS -->
+  <header class="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+          ⚙️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold text-[var(--foreground)] leading-tight">Gestão de Equipamentos Brasil</h1>
+            <span id="cloud-sync-badge" class="inline-flex items-center gap-1 text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-full">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 badge-pulse"></span>
+              <span>Nuvem Sincronizada</span>
+            </span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)]">437 Equipamentos • 6 Clientes (Segunda) • Sincronização Automática</p>
+        </div>
+      </div>
+
+      <!-- VIEW MODE SWITCHER -->
+      <div class="flex items-center bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+        <button id="btn-view-controller" onclick="switchView('controller')" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm">
+          <span>💻</span>
+          <span>Painel do Controlador</span>
+        </button>
+        <button id="btn-view-mobile" onclick="switchView('mobile')" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          <span>📱</span>
+          <span>Visão do Campo (Celular)</span>
+        </button>
+        <button id="btn-view-email" onclick="switchView('email')" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          <span>✉️</span>
+          <span>Alertas & Resumo</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="forceCloudSync()" title="Forçar sincronização com a nuvem" 
+          class="text-xs px-2.5 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold flex items-center gap-1">
+          <span>☁️</span> Sincronizar Agora
+        </button>
+        <button onclick="resetData()" title="Restaurar dados de demonstração" 
+          class="text-xs px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--background)] text-[var(--muted-foreground)] flex items-center gap-1">
+          <span>🔄</span> Resetar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto p-4 sm:p-6">
+
+    <!-- REAL-TIME ALERT BANNER FOR CONTROLLER -->
+    <div id="realtime-toast" class="hidden mb-4 p-3 bg-blue-600 text-white rounded-xl shadow-lg flex items-center justify-between text-xs font-semibold">
+      <div class="flex items-center gap-2">
+        <span class="text-base">🔔</span>
+        <span id="realtime-toast-text">Nova ocorrência recebida da nuvem!</span>
+      </div>
+      <span class="text-[10px] bg-blue-800 px-2 py-1 rounded">Atualizado agora</span>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: PAINEL DO CONTROLADOR (GESTAO POR EXCECAO)                       -->
+    <!-- ========================================================================= -->
+    <section id="view-controller" class="space-y-6">
+      
+      <!-- STATS SUMMARY CARDS -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-medium text-[var(--muted-foreground)]">Total de Equipamentos</span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-mono font-bold">437 EQUP</span>
+          </div>
+          <p class="text-2xl font-bold mt-1 text-[var(--foreground)]" id="stat-total">437</p>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">6 Clientes • Rota Segunda-Feira</p>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-medium text-amber-600 font-semibold">Com Pendência (Exceções)</span>
+            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Em Evidência</span>
+          </div>
+          <p class="text-2xl font-bold mt-1 text-amber-600" id="stat-issues">0</p>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Sincronizado na Nuvem</p>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-medium text-red-600 font-semibold">Alertas > 48h sem Ação</span>
+            <span class="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-medium badge-pulse">Crítico</span>
+          </div>
+          <p class="text-2xl font-bold mt-1 text-red-600" id="stat-overdue">0</p>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Atraso na solução</p>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-medium text-emerald-600">Sem Ocorrências (OK)</span>
+            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Ocultas</span>
+          </div>
+          <p class="text-2xl font-bold mt-1 text-emerald-600" id="stat-normal">0</p>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Operando normalmente</p>
+        </div>
+      </div>
+
+      <!-- CONTROLLER FILTERS & CONTROLS -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-4">
+        
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <!-- MODE TOGGLE -->
+          <div class="flex items-center gap-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="toggle-exception-only" class="sr-only peer" checked onchange="renderControllerView()">
+              <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+            <div>
+              <span class="text-sm font-semibold text-[var(--foreground)] block">Modo "Gestão por Exceção"</span>
+              <span class="text-xs text-[var(--muted-foreground)]">Exibe somente equipamentos com pendências ativas.</span>
+            </div>
+          </div>
+
+          <!-- SEARCH INPUT -->
+          <input type="text" id="search-input" placeholder="Buscar por cliente, código ou máquina..." 
+            oninput="renderControllerView()"
+            class="px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-64">
+        </div>
+
+        <!-- CLIENT & TECHNICIAN SELECTOR FILTERS -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[var(--border)]">
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Técnico:</label>
+            <select id="filter-tech" onchange="renderControllerView()" 
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="all">Todos os Técnicos</option>
+              <option value="Técnico Bruno" selected>👨‍🔧 Técnico Bruno (Segunda-Feira)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Cliente / Empreendimento:</label>
+            <select id="filter-client" onchange="renderControllerView()" 
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="all">Todos os 6 Clientes</option>
+              <option value="445">SÃO T. - MDIAS (Cod 445 - 13 EQUP)</option>
+              <option value="112">SALV-AEROPORTO (Cod 112 - 67 EQUP)</option>
+              <option value="296">CAMA-BRASKEM (Cod 296 - 52 EQUP)</option>
+              <option value="351">CAMA-SAINT GOBAIN (Cod 351 - 190 EQUP)</option>
+              <option value="151">FEIR-SAMS (Cod 151 - 69 EQUP)</option>
+              <option value="131">SALV-SAMS (Cod 131 - 46 EQUP)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Status da Máquina:</label>
+            <select id="filter-status" onchange="renderControllerView()" 
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="all">Todos os Status</option>
+              <option value="DESLIGADA">🔴 Desligada</option>
+              <option value="FALTA_PECA">🟡 Falta de Peça</option>
+              <option value="MANUTENCAO">🟠 Em Manutenção</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CARDS CONTAINER FOR MACHINES -->
+      <div id="controller-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically rendered via JS -->
+      </div>
+
+      <!-- EMPTY STATE WHEN ALL MACHINES ARE OK -->
+      <div id="empty-state" class="hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-12 text-center max-w-xl mx-auto my-8">
+        <div class="text-5xl mb-3">🎉</div>
+        <h3 class="text-lg font-bold text-[var(--foreground)]">Nenhuma pendência ativa nos 6 clientes!</h3>
+        <p class="text-sm text-[var(--muted-foreground)] mt-1">Todos os 437 equipamentos da rota de Segunda-Feira (Técnico Bruno) estão operando normalmente.</p>
+        <button onclick="switchView('mobile')" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow">
+          📲 Simular lançamento pelo celular
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: VISAO DO CAMPO / CELULAR (TECNICO BRUNO)                          -->
+    <!-- ========================================================================= -->
+    <section id="view-mobile" class="hidden max-w-md mx-auto">
+      
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-5 shadow-2xl space-y-4">
+        
+        <div class="border-b border-[var(--border)] pb-3 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold tracking-wider uppercase text-blue-600">Aplicação Mobile do Técnico</span>
+            <h2 class="text-base font-bold text-[var(--foreground)]">Lançamento de Ocorrência</h2>
+          </div>
+          <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-1 rounded-lg">👨‍🔧 Técnico Bruno</span>
+        </div>
+
+        <p class="text-xs text-[var(--muted-foreground)]">Selecione o cliente e o equipamento. A informação será enviada em tempo real para a nuvem.</p>
+
+        <form id="form-mobile-report" onsubmit="handleMobileSubmit(event)" class="space-y-4">
+          
+          <div>
+            <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
+              1. Cliente / Empreendimento (Segunda-Feira) <span class="text-red-500">*</span>
+            </label>
+            <select id="mobile-client-select" onchange="onMobileClientChange()" required 
+              class="w-full px-3 py-2.5 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="">-- Selecione o Cliente --</option>
+              <option value="445">SÃO T. - MDIAS (Cliente 445 - 13 EQUP)</option>
+              <option value="112">SALV-AEROPORTO (Cliente 112 - 67 EQUP)</option>
+              <option value="296">CAMA-BRASKEM (Cliente 296 - 52 EQUP)</option>
+              <option value="351">CAMA-SAINT GOBAIN (Cliente 351 - 190 EQUP)</option>
+              <option value="151">FEIR-SAMS (Cliente 151 - 69 EQUP)</option>
+              <option value="131">SALV-SAMS (Cliente 131 - 46 EQUP)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
+              2. Equipamento do Cliente <span class="text-red-500">*</span>
+            </label>
+            <select id="mobile-equipment-select" required 
+              class="w-full px-3 py-2.5 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="">-- Primeiro escolha o Cliente acima --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
+              3. Situação do Equipamento <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-red-400">
+                <input type="radio" name="mobile-status" value="DESLIGADA" required class="text-red-600 focus:ring-red-500">
+                <span class="text-xs font-medium text-red-600">🔴 Desligada</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-amber-400">
+                <input type="radio" name="mobile-status" value="FALTA_PECA" required class="text-amber-600 focus:ring-amber-500">
+                <span class="text-xs font-medium text-amber-600">🟡 Falta Peça</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-orange-400">
+                <input type="radio" name="mobile-status" value="MANUTENCAO" required class="text-orange-600 focus:ring-orange-500">
+                <span class="text-xs font-medium text-orange-600">🟠 Manutenção</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-emerald-400">
+                <input type="radio" name="mobile-status" value="NORMAL" required class="text-emerald-600 focus:ring-emerald-500">
+                <span class="text-xs font-medium text-emerald-600">🟢 Normal / OK</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
+              4. Observação / Motivo do Problema <span class="text-red-500">*</span>
+            </label>
+            <textarea id="mobile-notes" rows="3" required placeholder="Ex: Placa de controle queimada por oscilação de tensão. Necessita substituição..."
+              class="w-full px-3 py-2 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
+              5. Técnico Responsável <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="mobile-reporter" required value="Bruno" readonly
+              class="w-full px-3 py-2 rounded-xl text-xs bg-gray-100 border border-[var(--border)] text-gray-700 font-bold outline-none cursor-not-allowed">
+          </div>
+
+          <button type="submit" id="btn-submit-mobile"
+            class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-[0.98]">
+            📲 Sincronizar na Nuvem & Notificar Controlador
+          </button>
+        </form>
+
+        <div id="mobile-success-msg" class="hidden p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs text-center font-medium">
+          ✅ Ocorrência sincronizada com a nuvem em tempo real!
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: ALERTAS AUTOMATICOS & RESUMO POR CLIENTE                          -->
+    <!-- ========================================================================= -->
+    <section id="view-email" class="hidden space-y-6 max-w-4xl mx-auto">
+      
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-3 border-b border-[var(--border)] pb-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-sm">
+            ✉️
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-[var(--foreground)]">Relatório Consolidado por Cliente e Técnico</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Disparo automático de resumos matinais agrupados por empreendimento</p>
+          </div>
+        </div>
+
+        <div class="border border-[var(--border)] rounded-xl overflow-hidden bg-white text-gray-800 shadow-sm font-sans">
+          <div class="bg-gray-100 px-4 py-2 border-b border-gray-200 text-xs text-gray-600 flex justify-between items-center">
+            <span><strong>De:</strong> sistema-equipamentos@empresa.com.br</span>
+            <span class="text-[10px] font-mono text-gray-500">Relatório da Rota de Segunda-Feira</span>
+          </div>
+          <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 text-xs text-gray-700">
+            <strong>Assunto:</strong> [RESUMO DE EQUIPAMENTOS] 🚨 Ocorrências Ativas na Nuvem (Rota Segunda-Feira)
+          </div>
+          <div class="p-5 text-xs space-y-3" id="email-preview-body">
+            <!-- Dynamic content via JS -->
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button onclick="triggerSimulatedEmail()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">
+            📧 Simular Envio de E-mail para a Gerência
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL FOR CONTROLLER -->
+  <div id="modal-update" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      
+      <div class="flex justify-between items-start border-b border-[var(--border)] pb-3">
+        <div>
+          <span class="text-[10px] font-bold text-blue-600 tracking-wider uppercase">Atualização do Controlador</span>
+          <h3 id="modal-machine-title" class="text-base font-bold text-[var(--foreground)]">Cliente - Máquina</h3>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="p-3 bg-[var(--background)] rounded-xl border border-[var(--border)] space-y-1">
+          <div class="font-semibold text-[var(--foreground)]">Ocorrência Reportada pelo Técnico:</div>
+          <div id="modal-issue-desc" class="text-[var(--muted-foreground)]">--</div>
+          <div id="modal-reporter-info" class="text-[10px] text-gray-500 font-mono mt-1">--</div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-[var(--foreground)] mb-1">Evolução da Ação pelo Controlador:</label>
+          <select id="modal-action-stage" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none font-medium">
+            <option value="REGISTRADO">🟡 Ocorrência Registrada / Em Análise</option>
+            <option value="PECA_SOLICITADA">📦 Peça Solicitada ao Fornecedor</option>
+            <option value="TECNICO_AGENDADO">👨‍🔧 Manutenção em Andamento</option>
+            <option value="RESOLVIDO">🟢 PROBLEMA RESOLVIDO (Dar Baixa)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-[var(--foreground)] mb-1">Nota de Acompanhamento / Próximo Passo:</label>
+          <input type="text" id="modal-action-note" placeholder="Ex: Peça #4489 comprada. Substituição em andamento."
+            class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-[var(--border)]">
+        <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-xs font-semibold border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--background)]">
+          Cancelar
+        </button>
+        <button onclick="saveControllerAction()" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow">
+          Salvar & Sincronizar na Nuvem
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const CLOUD_DB_URL = 'https://gestao-equipamentos-br-default-rtdb.firebaseio.com/fleet_v2.json';
+
+    const CLIENTS_BRUNO = [
+      { code: '445', name: 'SÃO T. - MDIAS', equipCount: 13, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
+      { code: '112', name: 'SALV-AEROPORTO', equipCount: 67, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
+      { code: '296', name: 'CAMA-BRASKEM', equipCount: 52, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
+      { code: '351', name: 'CAMA-SAINT GOBAIN', equipCount: 190, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
+      { code: '151', name: 'FEIR-SAMS', equipCount: 69, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
+      { code: '131', name: 'SALV-SAMS', equipCount: 46, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' }
+    ];
+
+    let machinesData = [];
+    let isCloudOnline = true;
+    let lastKnownIssueCount = 0;
+
+    function generateDataset() {
+      const list = [];
+      CLIENTS_BRUNO.forEach(c => {
+        for (let i = 1; i <= c.equipCount; i++) {
+          const equipId = `EQUP-${c.code}-${String(i).padStart(3, '0')}`;
+          list.push({
+            id: equipId,
+            clientCode: c.code,
+            clientName: c.name,
+            tech: c.tech,
+            dayRoute: c.day,
+            equipNumber: i,
+            totalClientEquip: c.equipCount,
+            status: 'NORMAL',
+            issue: null,
+            reporter: null,
+            reportedAt: null,
+            actionStage: 'REGISTRADO',
+            actionNote: '',
+            lastActionAt: null
+          });
+        }
+      });
+
+      const now = new Date();
+      const hoursAgo = (h) => new Date(now.getTime() - h * 60 * 60 * 1000).toISOString();
+
+      const m1 = list.find(m => m.clientCode === '351' && m.equipNumber === 14);
+      if (m1) {
+        m1.status = 'DESLIGADA';
+        m1.issue = 'Disjuntor principal armado por sobrecarga. Fonte auxiliar queimada.';
+        m1.reporter = 'Bruno (Técnico)';
+        m1.reportedAt = hoursAgo(52);
+        m1.actionStage = 'REGISTRADO';
+        m1.actionNote = 'Aguardando liberação de compra da fonte de reposição pelo cliente.';
+        m1.lastActionAt = hoursAgo(52);
+      }
+
+      const m2 = list.find(m => m.clientCode === '112' && m.equipNumber === 8);
+      if (m2) {
+        m2.status = 'FALTA_PECA';
+        m2.issue = 'Vazamento no retentor hidráulico. Equipamento isolado por segurança.';
+        m2.reporter = 'Bruno (Técnico)';
+        m2.reportedAt = hoursAgo(26);
+        m2.actionStage = 'PECA_SOLICITADA';
+        m2.actionNote = 'Retentor solicitado ao estoque central em SP.';
+        m2.lastActionAt = hoursAgo(26);
+      }
+
+      const m3 = list.find(m => m.clientCode === '151' && m.equipNumber === 3);
+      if (m3) {
+        m3.status = 'MANUTENCAO';
+        m3.issue = 'Ajuste de calibração periódica do leitor óptico.';
+        m3.reporter = 'Bruno (Técnico)';
+        m3.reportedAt = hoursAgo(5);
+        m3.actionStage = 'TECNICO_AGENDADO';
+        m3.actionNote = 'Técnico Bruno efetuando ajustes no local.';
+        m3.lastActionAt = hoursAgo(5);
+      }
+
+      return list;
+    }
+
+    async function initData() {
+      const stored = localStorage.getItem('fleet_bruno_data_v2');
+      if (stored) {
+        try { machinesData = JSON.parse(stored); } catch(e) { machinesData = generateDataset(); }
+      } else {
+        machinesData = generateDataset();
+      }
+
+      renderControllerView();
+      renderEmailPreview();
+
+      await fetchCloudData();
+      setInterval(fetchCloudData, 4000);
+    }
+
+    function saveLocalCache() {
+      localStorage.setItem('fleet_bruno_data_v2', JSON.stringify(machinesData));
+    }
+
+    async function pushCloudData() {
+      saveLocalCache();
+      try {
+        const response = await fetch(CLOUD_DB_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(machinesData)
+        });
+        if (response.ok) {
+          setCloudBadgeStatus(true);
+        }
+      } catch (err) {
+        console.warn('Sync Cloud Error:', err);
+        setCloudBadgeStatus(false);
+      }
+    }
+
+    async function fetchCloudData() {
+      try {
+        const response = await fetch(CLOUD_DB_URL);
+        if (response.ok) {
+          const cloudList = await response.json();
+          if (cloudList && Array.isArray(cloudList) && cloudList.length > 0) {
+            const newIssuesCount = cloudList.filter(m => m.status !== 'NORMAL').length;
+            if (lastKnownIssueCount !== 0 && newIssuesCount > lastKnownIssueCount) {
+              showRealtimeToast(`Nova ocorrência registrada por um técnico no celular!`);
+            }
+            lastKnownIssueCount = newIssuesCount;
+
+            machinesData = cloudList;
+            saveLocalCache();
+            renderControllerView();
+            renderEmailPreview();
+            setCloudBadgeStatus(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Fetch Cloud Error:', err);
+        setCloudBadgeStatus(false);
+      }
+    }
+
+    function setCloudBadgeStatus(online) {
+      const badge = document.getElementById('cloud-sync-badge');
+      if (online) {
+        badge.className = 'inline-flex items-center gap-1 text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-full';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 badge-pulse"></span> Sincronizado na Nuvem`;
+      } else {
+        badge.className = 'inline-flex items-center gap-1 text-[10px] bg-amber-100 text-amber-800 border border-amber-300 font-bold px-2 py-0.5 rounded-full';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Modo Offline (Cache Local)`;
+      }
+    }
+
+    async function forceCloudSync() {
+      await fetchCloudData();
+      alert('☁️ Dados sincronizados com sucesso com o Banco de Dados na Nuvem!');
+    }
+
+    function showRealtimeToast(msg) {
+      const toast = document.getElementById('realtime-toast');
+      document.getElementById('realtime-toast-text').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 5000);
+    }
+
+    async function resetData() {
+      if (confirm('Deseja resetar os dados na nuvem e recarregar os testes do Técnico Bruno?')) {
+        machinesData = generateDataset();
+        await pushCloudData();
+        renderControllerView();
+        renderEmailPreview();
+      }
+    }
+
+    function switchView(viewName) {
+      document.getElementById('view-controller').classList.add('hidden');
+      document.getElementById('view-mobile').classList.add('hidden');
+      document.getElementById('view-email').classList.add('hidden');
+
+      document.getElementById('btn-view-controller').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+      document.getElementById('btn-view-mobile').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+      document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+
+      if (viewName === 'controller') {
+        document.getElementById('view-controller').classList.remove('hidden');
+        document.getElementById('btn-view-controller').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        renderControllerView();
+      } else if (viewName === 'mobile') {
+        document.getElementById('view-mobile').classList.remove('hidden');
+        document.getElementById('btn-view-mobile').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+      } else if (viewName === 'email') {
+        document.getElementById('view-email').classList.remove('hidden');
+        document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        renderEmailPreview();
+      }
+    }
+
+    function getHoursAgo(isoString) {
+      if (!isoString) return 0;
+      const past = new Date(isoString).getTime();
+      const now = new Date().getTime();
+      return Math.max(0, Math.floor((now - past) / (1000 * 60 * 60)));
+    }
+
+    function renderControllerView() {
+      const isExceptionOnly = document.getElementById('toggle-exception-only').checked;
+      const searchVal = document.getElementById('search-input').value.toLowerCase();
+      const clientVal = document.getElementById('filter-client').value;
+      const statusVal = document.getElementById('filter-status').value;
+
+      const grid = document.getElementById('controller-cards-grid');
+      const emptyState = document.getElementById('empty-state');
+      grid.innerHTML = '';
+
+      let totalCount = machinesData.length;
+      let issuesCount = 0;
+      let overdueCount = 0;
+      let normalCount = 0;
+
+      machinesData.forEach(m => {
+        if (m.status === 'NORMAL') {
+          normalCount++;
+        } else {
+          issuesCount++;
+          const hAgo = getHoursAgo(m.lastActionAt || m.reportedAt);
+          if (hAgo >= 48) overdueCount++;
+        }
+      });
+
+      document.getElementById('stat-total').textContent = totalCount;
+      document.getElementById('stat-issues').textContent = issuesCount;
+      document.getElementById('stat-overdue').textContent = overdueCount;
+      document.getElementById('stat-normal').textContent = normalCount;
+
+      const filtered = machinesData.filter(m => {
+        if (isExceptionOnly && m.status === 'NORMAL') return false;
+        if (searchVal && !m.id.toLowerCase().includes(searchVal) && !m.clientName.toLowerCase().includes(searchVal) && !m.clientCode.includes(searchVal) && !(m.issue || '').toLowerCase().includes(searchVal)) return false;
+        if (clientVal !== 'all' && m.clientCode !== clientVal) return false;
+        if (statusVal !== 'all' && m.status !== statusVal) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        grid.classList.add('hidden');
+        return;
+      } else {
+        emptyState.classList.add('hidden');
+        grid.classList.remove('hidden');
+      }
+
+      filtered.forEach(m => {
+        const card = document.createElement('div');
+        const isIssue = m.status !== 'NORMAL';
+        const hAgo = getHoursAgo(m.lastActionAt || m.reportedAt);
+
+        let borderClass = 'border-[var(--border)]';
+        let badgeSla = '';
+
+        if (isIssue) {
+          if (hAgo >= 48) {
+            borderClass = 'border-red-500 ring-1 ring-red-400 bg-red-50/20';
+            badgeSla = `<span class="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full badge-pulse">🚨 Sem Ação Há ${hAgo}h (Atraso Crítico)</span>`;
+          } else if (hAgo >= 24) {
+            borderClass = 'border-amber-400 bg-amber-50/20';
+            badgeSla = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">⚠️ Sem Ação Há ${hAgo}h</span>`;
+          } else {
+            badgeSla = `<span class="bg-blue-100 text-blue-800 text-[10px] font-medium px-2 py-0.5 rounded-full">🕒 Registrado há ${hAgo}h</span>`;
+          }
+        }
+
+        let statusBadge = '';
+        if (m.status === 'DESLIGADA') statusBadge = '<span class="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded text-[11px]">🔴 DESLIGADA</span>';
+        else if (m.status === 'FALTA_PECA') statusBadge = '<span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-[11px]">🟡 FALTA DE PEÇA</span>';
+        else if (m.status === 'MANUTENCAO') statusBadge = '<span class="bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded text-[11px]">🟠 MANUTENÇÃO</span>';
+        else statusBadge = '<span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[11px]">🟢 NORMAL</span>';
+
+        let stageText = '';
+        if (m.actionStage === 'REGISTRADO') stageText = '🟡 Ocorrência Registrada';
+        else if (m.actionStage === 'PECA_SOLICITADA') stageText = '📦 Peça Solicitada ao Fornecedor';
+        else if (m.actionStage === 'TECNICO_AGENDADO') stageText = '👨‍🔧 Manutenção em Andamento';
+
+        card.className = `bg-[var(--card)] border ${borderClass} rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3 relative`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div>
+                <span class="text-[10px] bg-gray-100 font-mono text-gray-700 px-1.5 py-0.5 rounded font-bold">Cliente ${m.clientCode}</span>
+                <h3 class="font-bold text-sm text-[var(--foreground)] leading-tight mt-0.5">${m.clientName}</h3>
+                <span class="text-[11px] text-[var(--muted-foreground)] font-mono">Máquina #${String(m.equipNumber).padStart(3, '0')} / ${m.totalClientEquip} EQUP</span>
+              </div>
+              <div>${statusBadge}</div>
+            </div>
+
+            ${badgeSla ? `<div class="mb-2">${badgeSla}</div>` : ''}
+
+            ${isIssue ? `
+              <div class="p-3 bg-[var(--background)] rounded-xl border border-[var(--border)] space-y-1 text-xs">
+                <div class="font-semibold text-[var(--foreground)]">Observação do Técnico:</div>
+                <div class="text-[var(--muted-foreground)]">${m.issue || 'Sem descrição.'}</div>
+                <div class="text-[10px] text-gray-500 mt-1 flex justify-between">
+                  <span>Técnico: <strong>${m.reporter || 'Bruno'}</strong></span>
+                  <span>Rota: ${m.dayRoute}</span>
+                </div>
+              </div>
+              <div class="mt-2 text-xs">
+                <span class="font-semibold text-gray-700">Etapa Controlador:</span> 
+                <span class="text-blue-700 font-medium">${stageText}</span>
+                ${m.actionNote ? `<p class="text-[11px] text-gray-500 italic mt-0.5">"${m.actionNote}"</p>` : ''}
+              </div>
+            ` : `
+              <p class="text-xs text-emerald-600 font-medium">Equipamento operando normalmente no cliente.</p>
+            `}
+          </div>
+
+          <div class="pt-2 border-t border-[var(--border)]">
+            ${isIssue ? `
+              <button onclick="openModal('${m.id}')" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1">
+                <span>✏️</span> Atualizar Ação / Dar Baixa
+              </button>
+            ` : `
+              <span class="text-[11px] text-gray-400">Sem pendências ativas</span>
+            `}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    function onMobileClientChange() {
+      const clientCode = document.getElementById('mobile-client-select').value;
+      const equipSelect = document.getElementById('mobile-equipment-select');
+      equipSelect.innerHTML = '<option value="">-- Selecione o Equipamento --</option>';
+
+      if (!clientCode) return;
+
+      const clientMachines = machinesData.filter(m => m.clientCode === clientCode);
+      clientMachines.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        const hasIssue = m.status !== 'NORMAL' ? ` ⚠️ (${m.status})` : '';
+        opt.textContent = `Máquina #${String(m.equipNumber).padStart(3, '0')} (Total: ${m.totalClientEquip})${hasIssue}`;
+        equipSelect.appendChild(opt);
+      });
+    }
+
+    async function handleMobileSubmit(e) {
+      e.preventDefault();
+      const equipId = document.getElementById('mobile-equipment-select').value;
+      const status = document.querySelector('input[name="mobile-status"]:checked').value;
+      const notes = document.getElementById('mobile-notes').value;
+
+      const btn = document.getElementById('btn-submit-mobile');
+      btn.disabled = true;
+      btn.innerHTML = `⏳ Sincronizando com a Nuvem...`;
+
+      const target = machinesData.find(m => m.id === equipId);
+      if (target) {
+        target.status = status;
+        if (status === 'NORMAL') {
+          target.issue = null;
+          target.reporter = null;
+          target.reportedAt = null;
+          target.actionStage = 'REGISTRADO';
+          target.actionNote = '';
+        } else {
+          target.issue = notes;
+          target.reporter = 'Bruno';
+          target.reportedAt = new Date().toISOString();
+          target.lastActionAt = new Date().toISOString();
+          target.actionStage = 'REGISTRADO';
+          target.actionNote = 'Aguardando análise do controlador.';
+        }
+
+        await pushCloudData();
+
+        btn.disabled = false;
+        btn.innerHTML = `📲 Sincronizar na Nuvem & Notificar Controlador`;
+
+        const successMsg = document.getElementById('mobile-success-msg');
+        successMsg.classList.remove('hidden');
+        setTimeout(() => successMsg.classList.add('hidden'), 4000);
+
+        document.getElementById('mobile-notes').value = '';
+        document.getElementById('mobile-equipment-select').value = '';
+        const checkedRadio = document.querySelector('input[name="mobile-status"]:checked');
+        if (checkedRadio) checkedRadio.checked = false;
+      }
+    }
+
+    let currentEditingId = null;
+
+    function openModal(id) {
+      currentEditingId = id;
+      const m = machinesData.find(x => x.id === id);
+      if (!m) return;
+
+      document.getElementById('modal-machine-title').textContent = `${m.clientName} (Cod ${m.clientCode}) - Máquina #${String(m.equipNumber).padStart(3, '0')}`;
+      document.getElementById('modal-issue-desc').textContent = m.issue || 'Sem descrição';
+      document.getElementById('modal-reporter-info').textContent = `Reportado pelo Técnico ${m.reporter || 'Bruno'} em ${new Date(m.reportedAt).toLocaleString('pt-BR')}`;
+      document.getElementById('modal-action-stage').value = m.actionStage || 'REGISTRADO';
+      document.getElementById('modal-action-note').value = m.actionNote || '';
+
+      document.getElementById('modal-update').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-update').classList.add('hidden');
+      currentEditingId = null;
+    }
+
+    async function saveControllerAction() {
+      if (!currentEditingId) return;
+      const m = machinesData.find(x => x.id === currentEditingId);
+      if (!m) return;
+
+      const newStage = document.getElementById('modal-action-stage').value;
+      const newNote = document.getElementById('modal-action-note').value;
+
+      m.actionStage = newStage;
+      m.actionNote = newNote;
+      m.lastActionAt = new Date().toISOString();
+
+      if (newStage === 'RESOLVIDO') {
+        m.status = 'NORMAL';
+        m.issue = null;
+        m.reporter = null;
+        m.reportedAt = null;
+        m.actionStage = 'REGISTRADO';
+        m.actionNote = '';
+      }
+
+      await pushCloudData();
+      closeModal();
+      renderControllerView();
+      renderEmailPreview();
+    }
+
+    function renderEmailPreview() {
+      const container = document.getElementById('email-preview-body');
+      const activeIssues = machinesData.filter(m => m.status !== 'NORMAL');
+      const overdue = activeIssues.filter(m => getHoursAgo(m.lastActionAt || m.reportedAt) >= 48);
+
+      let html = `
+        <p class="font-bold text-gray-900">Prezado Controlador,</p>
+        <p class="text-gray-600">Este é o resumo consolidado da rota de <strong>Segunda-Feira (Técnico Bruno)</strong> com sincronização na nuvem.</p>
+        
+        <div class="my-3 p-3 bg-gray-100 rounded-lg border border-gray-200 flex flex-wrap gap-4 text-xs font-semibold">
+          <span>Total Equipamentos: 437</span>
+          <span class="text-emerald-700">Normais: ${437 - activeIssues.length}</span>
+          <span class="text-amber-700">Com Pendência: ${activeIssues.length}</span>
+          <span class="text-red-700">Críticos (>48h sem ação): ${overdue.length}</span>
+        </div>
+      `;
+
+      if (activeIssues.length === 0) {
+        html += `<p class="text-emerald-700 font-bold">🎉 Nenhuma ocorrência ativa nos 6 clientes de Segunda-Feira!</p>`;
+      } else {
+        html += `<h4 class="font-bold text-gray-800 border-b pb-1 mb-2">Clientes em Evidência (${activeIssues.length} ocorrências):</h4><ul class="space-y-2">`;
+        activeIssues.forEach(m => {
+          const hAgo = getHoursAgo(m.lastActionAt || m.reportedAt);
+          const isCritical = hAgo >= 48;
+          html += `
+            <li class="p-2.5 rounded-lg border ${isCritical ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} text-xs">
+              <div class="flex justify-between font-bold">
+                <span>Cliente ${m.clientCode} - ${m.clientName} (Máquina #${String(m.equipNumber).padStart(3, '0')})</span>
+                <span class="${isCritical ? 'text-red-700 font-bold' : 'text-amber-700'}">${m.status} (${hAgo}h sem ação)</span>
+              </div>
+              <p class="text-gray-600 mt-1"><strong>Motivo:</strong> ${m.issue || 'Sem descrição'}</p>
+              <p class="text-gray-500 text-[11px] mt-0.5"><strong>Status Controlador:</strong> ${m.actionStage} - ${m.actionNote || 'Nenhuma nota'}</p>
+            </li>
+          `;
+        });
+        html += `</ul>`;
+      }
+
+      html += `<p class="text-gray-500 text-[11px] mt-4 border-t pt-2">Mensagem gerada automaticamente pelo Sistema na Nuvem.</p>`;
+      container.innerHTML = html;
+    }
+
+    function triggerSimulatedEmail() {
+      alert('📧 Relatório do Técnico Bruno simulado e enviado com sucesso!');
+    }
+
+    window.addEventListener('DOMContentLoaded', initData);
+  </script>
+</body>
+</html>
