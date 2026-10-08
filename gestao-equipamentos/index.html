@@ -401,8 +401,9 @@
           <div id="modal-issue-desc" class="text-slate-900 dark:text-slate-100 text-xs font-semibold leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner">
             --
           </div>
-          <div id="modal-reporter-info" class="text-[11px] text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
-            <span>👤</span> <span id="modal-reporter-text">--</span>
+          <div id="modal-reporter-info" class="text-xs bg-slate-100 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 text-slate-700 dark:text-slate-300 font-medium">
+            <div id="modal-reporter-text">👤 <strong>Abertura:</strong> --</div>
+            <div id="modal-last-update-text" class="text-blue-700 dark:text-blue-400 font-bold border-t border-slate-200 dark:border-slate-800 pt-1.5">🔄 <strong>Última Alteração de Status:</strong> --</div>
           </div>
         </div>
 
@@ -450,7 +451,7 @@
 
   <script>
     // CLOUD DATABASE URL FOR CLEAN FULL 146 EQUIPMENTS DATASET
-    const CLOUD_DB_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a11c1478cc2202';
+    const CLOUD_DB_URL = '/.netlify/functions/sync';
 
     // COMPLETE 146 EQUIPMENTS DATASET ACROSS 7 TECHNICIANS
     const INITIAL_EQUIPMENTS = [
@@ -871,6 +872,18 @@
       return Math.max(0, Math.floor((now - past) / (1000 * 60 * 60)));
     }
 
+    function formatDateTime(isoString) {
+      if (!isoString) return 'Data recente';
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return 'Data recente';
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} às ${hours}:${mins}`;
+    }
+
     function renderControllerView() {
       const isExceptionOnly = document.getElementById('toggle-exception-only').checked;
       const searchVal = document.getElementById('search-input').value.toLowerCase();
@@ -959,6 +972,9 @@
 
         card.className = `bg-[var(--card)] border ${borderClass} rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3 relative`;
 
+        const reportedByStr = m.reporter || m.tech;
+        const lastUpdatedByStr = m.lastUpdatedBy || m.reporter || m.tech;
+
         card.innerHTML = `
           <div>
             <div class="flex items-start justify-between gap-2 mb-2">
@@ -977,11 +993,19 @@
             ${badgeSla ? `<div class="mb-2">${badgeSla}</div>` : ''}
 
             ${isIssue ? `
-              <div class="p-3 bg-[var(--background)] rounded-xl border border-[var(--border)] space-y-1 text-xs">
+              <div class="p-3 bg-[var(--background)] rounded-xl border border-[var(--border)] space-y-2 text-xs">
                 <div class="font-semibold text-[var(--foreground)]">Observação do Técnico:</div>
-                <div class="text-[var(--muted-foreground)] font-medium">${m.issue || 'Sem descrição.'}</div>
-                <div class="text-[10px] text-gray-500 mt-1 flex justify-between">
-                  <span>Reportado por: <strong>${m.reporter || m.tech}</strong></span>
+                <div class="text-[var(--muted-foreground)] font-medium leading-relaxed">${m.issue || 'Sem descrição.'}</div>
+                
+                <div class="pt-2 mt-1 border-t border-[var(--border)] space-y-1.5 text-[11px]">
+                  <div class="flex items-center justify-between text-gray-500">
+                    <span>👤 <strong>Abertura:</strong> ${reportedByStr}</span>
+                    <span class="font-mono text-[10px]">📅 ${formatDateTime(m.reportedAt)}</span>
+                  </div>
+                  <div class="flex items-center justify-between bg-blue-50/80 dark:bg-blue-900/40 text-blue-900 dark:text-blue-200 p-2 rounded-lg font-semibold text-[11px] border border-blue-200 dark:border-blue-800">
+                    <span class="truncate pr-2">🔄 <strong>Última Alteração:</strong> ${lastUpdatedByStr}</span>
+                    <span class="whitespace-nowrap font-mono text-[10px]">🕒 ${formatDateTime(m.lastActionAt || m.reportedAt)}</span>
+                  </div>
                 </div>
               </div>
               <div class="mt-2 text-xs">
@@ -1066,8 +1090,9 @@
         } else {
           target.issue = notes;
           target.reporter = techName;
-          target.reportedAt = new Date().toISOString();
+          target.reportedAt = target.reportedAt || new Date().toISOString();
           target.lastActionAt = new Date().toISOString();
+          target.lastUpdatedBy = techName;
           target.actionStage = 'REGISTRADO';
           target.actionNote = 'Aguardando análise do controlador.';
         }
@@ -1098,9 +1123,13 @@
       document.getElementById('modal-machine-title').textContent = `${m.clientName} (Cod ${m.clientCode}) - EQP N° ${m.equipNumber}`;
       document.getElementById('modal-issue-desc').textContent = m.issue || 'Sem descrição';
       
-      const reportedDate = m.reportedAt ? new Date(m.reportedAt).toLocaleString('pt-BR') : 'Data recente';
-      document.getElementById('modal-reporter-text').textContent = `Reportado por ${m.reporter || m.tech} em ${reportedDate}`;
-      
+      const reportedDate = formatDateTime(m.reportedAt);
+      const lastUpdatedDate = formatDateTime(m.lastActionAt || m.reportedAt);
+      const updatedBy = m.lastUpdatedBy || m.reporter || m.tech;
+
+      document.getElementById('modal-reporter-text').innerHTML = `👤 <strong>Abertura:</strong> ${m.reporter || m.tech} em <strong>${reportedDate}</strong>`;
+      document.getElementById('modal-last-update-text').innerHTML = `🔄 <strong>Última Alteração de Status:</strong> ${updatedBy} em <strong>${lastUpdatedDate}</strong>`;
+
       const statusBadgeEl = document.getElementById('modal-status-badge');
       if (m.status === 'DESLIGADA') statusBadgeEl.className = 'bg-red-100 text-red-800 border border-red-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
       else if (m.status === 'FALTA_PECA') statusBadgeEl.className = 'bg-amber-100 text-amber-800 border border-amber-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
@@ -1131,6 +1160,7 @@
       m.actionStage = newStage;
       m.actionNote = newNote;
       m.lastActionAt = new Date().toISOString();
+      m.lastUpdatedBy = 'Controlador';
 
       if (newStage === 'RESOLVIDO') {
         m.status = 'NORMAL';
@@ -1139,6 +1169,7 @@
         m.reportedAt = null;
         m.actionStage = 'REGISTRADO';
         m.actionNote = '';
+        m.lastUpdatedBy = null;
       }
 
       await pushCloudData();
