@@ -33,7 +33,7 @@
       </div>
 
       <!-- VIEW MODE SWITCHER -->
-      <div class="flex items-center bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+      <div class="flex items-center bg-[var(--background)] p-1 rounded-xl border border-[var(--border)] flex-wrap gap-1">
         <button id="btn-view-controller" onclick="switchView('controller')" 
           class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm">
           <span>💻</span>
@@ -49,9 +49,21 @@
           <span>✉️</span>
           <span>Alertas & Resumo</span>
         </button>
+        <button id="btn-view-users" onclick="switchView('users')" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          <span>👥</span>
+          <span>Gestão de Usuários</span>
+        </button>
       </div>
 
       <div class="flex items-center gap-2">
+        <div id="user-logged-badge" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm">
+          <span id="user-avatar-icon">👤</span>
+          <span id="user-logged-name">Carregando...</span>
+          <button onclick="logoutUser()" title="Sair da Conta" class="ml-1 text-red-600 hover:text-red-800 font-bold hover:bg-red-100 px-1.5 py-0.5 rounded text-[10px]">
+            🚪 Sair
+          </button>
+        </div>
         <button onclick="forceCloudSync()" title="Forçar sincronização com a nuvem" 
           class="text-xs px-2.5 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold flex items-center gap-1">
           <span>☁️</span> Sincronizar
@@ -365,9 +377,50 @@
         <div class="flex justify-end">
           <button onclick="triggerSimulatedEmail()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">
             📧 Simular Envio de E-mail para a Gerência
-          </button>
         </div>
 
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: GESTÃO DE USUÁRIOS E PERMISSÕES DE ACESSO                         -->
+    <!-- ========================================================================= -->
+    <section id="view-users" class="hidden space-y-6 max-w-5xl mx-auto">
+      
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-[var(--foreground)]">👥 Controle de Usuários e Permissões de Acesso</h2>
+            <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-purple-300">Painel Master</span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] mt-0.5">Gerencie os acessos dos 7 técnicos, crie novos usuários e altere senhas vinculadas às alterações.</p>
+        </div>
+
+        <button onclick="openCreateUserModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all">
+          <span>➕</span> Cadastrar Novo Usuário
+        </button>
+      </div>
+
+      <!-- USERS LIST TABLE -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border-b border-[var(--border)]">
+              <tr>
+                <th class="px-4 py-3">Usuário / Nome</th>
+                <th class="px-4 py-3">Login (Username)</th>
+                <th class="px-4 py-3">Perfil de Acesso</th>
+                <th class="px-4 py-3">Escopo de Equipamentos</th>
+                <th class="px-4 py-3">Senha de Acesso</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-[var(--border)] font-medium">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </section>
@@ -446,6 +499,109 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: LOGIN DE ACESSO COM SENHA                                          -->
+  <!-- ========================================================================= -->
+  <div id="login-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl mx-auto shadow-lg">
+          🔐
+        </div>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Acesso ao Sistema de Equipamentos</h2>
+        <p class="text-xs text-slate-500">Selecione o seu usuário e digite a sua senha para acessar o painel.</p>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Usuário / Técnico:</label>
+          <select id="login-user-select" class="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Senha de Acesso:</label>
+          <input type="password" id="login-password-input" placeholder="Digite sua senha..." required
+            class="w-full px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div id="login-error-msg" class="hidden text-xs text-red-600 font-bold text-center bg-red-50 p-2.5 rounded-xl border border-red-200">
+          ❌ Senha incorreta! Tente novamente.
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg transition-all">
+          🔑 Entrar no Sistema
+        </button>
+      </form>
+      
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-[11px] text-slate-500">
+        💡 <strong>Senhas Padrão:</strong> Master: <code class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-mono font-bold">123456</code> | Técnicos: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-gray-700 font-mono font-bold">nome123</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: CADASTRAR / EDITAR USUÁRIO                                         -->
+  <!-- ========================================================================= -->
+  <div id="modal-user-form" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <h3 id="modal-user-title" class="text-sm font-bold text-[var(--foreground)]">➕ Cadastrar Novo Usuário</h3>
+        <button onclick="closeUserModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-gray-500 font-bold text-base flex items-center justify-center">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveUser(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="user-form-id" value="">
+        
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Nome Completo / Identificação:</label>
+          <input type="text" id="user-form-name" placeholder="Ex: Técnico Mateus ou Controlador Roberto" required
+            class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+        </div>
+
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Login (Username):</label>
+          <input type="text" id="user-form-username" placeholder="Ex: mateus" required
+            class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+        </div>
+
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Senha de Acesso:</label>
+          <input type="text" id="user-form-pass" placeholder="Ex: mateus123" required
+            class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-mono">
+        </div>
+
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Perfil de Acesso / Função:</label>
+          <select id="user-form-role" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+            <option value="TECH">👨‍🔧 Técnico de Campo</option>
+            <option value="MASTER">👑 Controlador Master (Acesso Total)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Equipamentos Vinculados / Escopo:</label>
+          <select id="user-form-allowed" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+            <option value="all">🌐 Todos os 146 Equipamentos (Sem Restrição)</option>
+            <option value="Técnico João">👨‍🔧 Técnico João (15 EQP)</option>
+            <option value="Técnico Cauê">👨‍🔧 Técnico Cauê (30 EQP)</option>
+            <option value="Técnico Anderson">👨‍🔧 Técnico Anderson (34 EQP)</option>
+            <option value="Técnico Otávio">👨‍🔧 Técnico Otávio (22 EQP)</option>
+            <option value="Técnico Antônio">👨‍🔧 Técnico Antônio (22 EQP)</option>
+            <option value="Técnico Francisco">👨‍🔧 Técnico Francisco (16 EQP)</option>
+            <option value="Técnico Bruno">👨‍🔧 Técnico Bruno (7 EQP)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-[var(--border)]">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 rounded-xl border border-[var(--border)] text-gray-600 font-semibold">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow">💾 Salvar Usuário</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -616,6 +772,19 @@
       { clientName: 'SALV-SAMS', clientCode: '131', equipNumber: '46', tech: 'Técnico Bruno', state: 'BA' }
     ];
 
+    const INITIAL_USERS = [
+      { id: 'usr-master', name: 'Controlador Master', username: 'master', pass: '123456', role: 'MASTER', allowedTech: 'all' },
+      { id: 'usr-joao', name: 'Técnico João', username: 'joao', pass: 'joao123', role: 'TECH', allowedTech: 'Técnico João' },
+      { id: 'usr-caue', name: 'Técnico Cauê', username: 'caue', pass: 'caue123', role: 'TECH', allowedTech: 'Técnico Cauê' },
+      { id: 'usr-anderson', name: 'Técnico Anderson', username: 'anderson', pass: 'anderson123', role: 'TECH', allowedTech: 'Técnico Anderson' },
+      { id: 'usr-otavio', name: 'Técnico Otávio', username: 'otavio', pass: 'otavio123', role: 'TECH', allowedTech: 'Técnico Otávio' },
+      { id: 'usr-antonio', name: 'Técnico Antônio', username: 'antonio', pass: 'antonio123', role: 'TECH', allowedTech: 'Técnico Antônio' },
+      { id: 'usr-francisco', name: 'Técnico Francisco', username: 'francisco', pass: 'francisco123', role: 'TECH', allowedTech: 'Técnico Francisco' },
+      { id: 'usr-bruno', name: 'Técnico Bruno', username: 'bruno', pass: 'bruno123', role: 'TECH', allowedTech: 'Técnico Bruno' }
+    ];
+
+    let usersData = [];
+    let currentUser = null;
     let machinesData = [];
     let lastKnownIssueCount = 0;
 
@@ -688,7 +857,102 @@
       return list;
     }
 
+    function initUserSession() {
+      const storedUsers = localStorage.getItem('fleet_v9_users');
+      if (storedUsers) {
+        try { usersData = JSON.parse(storedUsers); } catch(e) { usersData = [...INITIAL_USERS]; }
+      } else {
+        usersData = [...INITIAL_USERS];
+      }
+
+      const storedUser = localStorage.getItem('fleet_v9_current_user');
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          const found = usersData.find(u => u.id === parsed.id || u.username === parsed.username);
+          if (found) {
+            currentUser = found;
+          }
+        } catch(e) {}
+      }
+
+      populateLoginUserDropdown();
+
+      if (currentUser) {
+        document.getElementById('login-modal').classList.add('hidden');
+        updateUserHeaderBadge();
+        applyUserPermissions();
+      } else {
+        document.getElementById('login-modal').classList.remove('hidden');
+      }
+    }
+
+    function populateLoginUserDropdown() {
+      const select = document.getElementById('login-user-select');
+      if (!select) return;
+      select.innerHTML = '';
+      usersData.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.role === 'MASTER' ? '👑' : '👨‍🔧'} ${u.name} (${u.username})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const userId = document.getElementById('login-user-select').value;
+      const pass = document.getElementById('login-password-input').value;
+      const errEl = document.getElementById('login-error-msg');
+
+      const u = usersData.find(x => x.id === userId);
+      if (u && u.pass === pass) {
+        currentUser = u;
+        localStorage.setItem('fleet_v9_current_user', JSON.stringify(u));
+        errEl.classList.add('hidden');
+        document.getElementById('login-password-input').value = '';
+        document.getElementById('login-modal').classList.add('hidden');
+        updateUserHeaderBadge();
+        applyUserPermissions();
+      } else {
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      localStorage.removeItem('fleet_v9_current_user');
+      document.getElementById('login-modal').classList.remove('hidden');
+      populateLoginUserDropdown();
+    }
+
+    function updateUserHeaderBadge() {
+      const nameEl = document.getElementById('user-logged-name');
+      const iconEl = document.getElementById('user-avatar-icon');
+      if (!currentUser) {
+        nameEl.textContent = 'Não Logado';
+        iconEl.textContent = '👤';
+        return;
+      }
+      nameEl.textContent = `${currentUser.name} (${currentUser.role === 'MASTER' ? 'Master' : 'Técnico'})`;
+      iconEl.textContent = currentUser.role === 'MASTER' ? '👑' : '👨‍🔧';
+    }
+
+    function applyUserPermissions() {
+      if (!currentUser) return;
+
+      const techSelect = document.getElementById('mobile-tech-select');
+      if (currentUser.role === 'TECH' && currentUser.allowedTech !== 'all') {
+        if (techSelect) {
+          techSelect.value = currentUser.allowedTech;
+          onMobileTechChange();
+        }
+      }
+    }
+
     async function initData() {
+      initUserSession();
+
       const stored = localStorage.getItem('fleet_v9_active_sync');
       if (stored) {
         try { machinesData = JSON.parse(stored); } catch(e) { machinesData = generateDataset(); }
@@ -700,6 +964,7 @@
       renderTechBreakdown();
       renderControllerView();
       renderEmailPreview();
+      renderUsersTable();
 
       await fetchCloudData();
       setInterval(fetchCloudData, 3000);
@@ -753,7 +1018,10 @@
         const occurrences = machinesData.filter(m => m.status !== 'NORMAL');
         const payload = {
           name: 'gestao_br_fleet_v9',
-          data: { occurrences: occurrences }
+          data: {
+            occurrences: occurrences,
+            users: usersData
+          }
         };
         const response = await fetch(CLOUD_DB_URL, {
           method: 'PUT',
@@ -777,6 +1045,16 @@
         if (response.ok) {
           const result = await response.json();
           const cloudOccurrences = (result && result.data && Array.isArray(result.data.occurrences)) ? result.data.occurrences : [];
+          if (result && result.data && Array.isArray(result.data.users) && result.data.users.length > 0) {
+            usersData = result.data.users;
+            localStorage.setItem('fleet_v9_users', JSON.stringify(usersData));
+            renderUsersTable();
+            populateLoginUserDropdown();
+            if (currentUser) {
+              const fresh = usersData.find(u => u.id === currentUser.id);
+              if (fresh) { currentUser = fresh; updateUserHeaderBadge(); }
+            }
+          }
           
           const newDataset = generateDataset();
           cloudOccurrences.forEach(occ => {
@@ -789,6 +1067,7 @@
               target.actionStage = occ.actionStage;
               target.actionNote = occ.actionNote;
               target.lastActionAt = occ.lastActionAt;
+              target.lastUpdatedBy = occ.lastUpdatedBy;
             }
           });
 
@@ -846,10 +1125,12 @@
       document.getElementById('view-controller').classList.add('hidden');
       document.getElementById('view-mobile').classList.add('hidden');
       document.getElementById('view-email').classList.add('hidden');
+      document.getElementById('view-users').classList.add('hidden');
 
       document.getElementById('btn-view-controller').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
       document.getElementById('btn-view-mobile').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
       document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+      document.getElementById('btn-view-users').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
 
       if (viewName === 'controller') {
         document.getElementById('view-controller').classList.remove('hidden');
@@ -862,6 +1143,10 @@
         document.getElementById('view-email').classList.remove('hidden');
         document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
         renderEmailPreview();
+      } else if (viewName === 'users') {
+        document.getElementById('view-users').classList.remove('hidden');
+        document.getElementById('btn-view-users').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        renderUsersTable();
       }
     }
 
@@ -1156,11 +1441,12 @@
 
       const newStage = document.getElementById('modal-action-stage').value;
       const newNote = document.getElementById('modal-action-note').value;
+      const authorName = currentUser ? currentUser.name : 'Controlador Master';
 
       m.actionStage = newStage;
       m.actionNote = newNote;
       m.lastActionAt = new Date().toISOString();
-      m.lastUpdatedBy = 'Controlador';
+      m.lastUpdatedBy = authorName;
 
       if (newStage === 'RESOLVIDO') {
         m.status = 'NORMAL';
@@ -1266,6 +1552,142 @@
 
     function triggerSimulatedEmail() {
       alert('📧 Relatório simulado e enviado com sucesso!');
+    }
+
+    // USER MANAGEMENT FUNCTIONS
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      usersData.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+
+        const roleBadge = u.role === 'MASTER' 
+          ? '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full text-[10px] border border-purple-300">👑 Master Admin</span>'
+          : '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-[10px] border border-blue-300">👨‍🔧 Técnico</span>';
+
+        const escopoStr = u.allowedTech === 'all' ? '🌐 Todos os 146 Equipamentos' : `👨‍🔧 ${u.allowedTech}`;
+
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-bold text-slate-900 dark:text-slate-100">${u.name}</td>
+          <td class="px-4 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">${u.username}</td>
+          <td class="px-4 py-3">${roleBadge}</td>
+          <td class="px-4 py-3 text-slate-600 dark:text-slate-300 font-medium">${escopoStr}</td>
+          <td class="px-4 py-3 font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded w-fit">${u.pass}</td>
+          <td class="px-4 py-3 text-right space-x-1">
+            <button onclick="openEditUserModal('${u.id}')" class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-bold">
+              ✏️ Editar
+            </button>
+            ${u.id !== 'usr-master' ? `
+              <button onclick="deleteUser('${u.id}')" class="px-2.5 py-1 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-lg text-xs font-bold">
+                🗑️ Excluir
+              </button>
+            ` : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openCreateUserModal() {
+      document.getElementById('user-form-id').value = '';
+      document.getElementById('user-form-name').value = '';
+      document.getElementById('user-form-username').value = '';
+      document.getElementById('user-form-pass').value = '';
+      document.getElementById('user-form-role').value = 'TECH';
+      document.getElementById('user-form-allowed').value = 'all';
+      document.getElementById('modal-user-title').textContent = '➕ Cadastrar Novo Usuário';
+      document.getElementById('modal-user-form').classList.remove('hidden');
+    }
+
+    function openEditUserModal(id) {
+      const u = usersData.find(x => x.id === id);
+      if (!u) return;
+
+      document.getElementById('user-form-id').value = u.id;
+      document.getElementById('user-form-name').value = u.name;
+      document.getElementById('user-form-username').value = u.username;
+      document.getElementById('user-form-pass').value = u.pass;
+      document.getElementById('user-form-role').value = u.role;
+      document.getElementById('user-form-allowed').value = u.allowedTech || 'all';
+
+      document.getElementById('modal-user-title').textContent = `✏️ Editar Usuário (${u.username})`;
+      document.getElementById('modal-user-form').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('modal-user-form').classList.add('hidden');
+    }
+
+    async function handleSaveUser(e) {
+      e.preventDefault();
+      const id = document.getElementById('user-form-id').value;
+      const name = document.getElementById('user-form-name').value.trim();
+      const username = document.getElementById('user-form-username').value.trim().toLowerCase();
+      const pass = document.getElementById('user-form-pass').value.trim();
+      const role = document.getElementById('user-form-role').value;
+      const allowedTech = document.getElementById('user-form-allowed').value;
+
+      if (!name || !username || !pass) {
+        alert('Por favor preencha todos os campos.');
+        return;
+      }
+
+      if (id) {
+        const u = usersData.find(x => x.id === id);
+        if (u) {
+          u.name = name;
+          u.username = username;
+          u.pass = pass;
+          u.role = role;
+          u.allowedTech = allowedTech;
+        }
+      } else {
+        const existing = usersData.find(x => x.username === username);
+        if (existing) {
+          alert('Já existe um usuário cadastrado com este Login (Username).');
+          return;
+        }
+        usersData.push({
+          id: 'usr-' + Date.now(),
+          name,
+          username,
+          pass,
+          role,
+          allowedTech
+        });
+      }
+
+      await saveUsersData();
+      closeUserModal();
+      renderUsersTable();
+      populateLoginUserDropdown();
+      alert('✅ Usuário salvo e sincronizado na nuvem com sucesso!');
+    }
+
+    async function deleteUser(id) {
+      const u = usersData.find(x => x.id === id);
+      if (!u) return;
+
+      if (u.id === 'usr-master') {
+        alert('❌ Não é possível excluir o usuário Master principal.');
+        return;
+      }
+
+      if (confirm(`Tem certeza que deseja excluir o usuário "${u.name}" (${u.username})?`)) {
+        usersData = usersData.filter(x => x.id !== id);
+        await saveUsersData();
+        renderUsersTable();
+        populateLoginUserDropdown();
+        alert('✅ Usuário excluído com sucesso.');
+      }
+    }
+
+    async function saveUsersData() {
+      localStorage.setItem('fleet_v9_users', JSON.stringify(usersData));
+      await pushCloudData();
     }
 
     window.addEventListener('DOMContentLoaded', initData);
