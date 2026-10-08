@@ -445,7 +445,7 @@
 
   <script>
     // CLOUD DATABASE URL FOR CLEAN FULL 146 EQUIPMENTS DATASET
-    const CLOUD_DB_URL = '/.netlify/functions/sync';
+    const CLOUD_DB_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a11c1478cc2202';
 
     // COMPLETE 146 EQUIPMENTS DATASET ACROSS 7 TECHNICIANS
     const INITIAL_EQUIPMENTS = [
@@ -617,7 +617,7 @@
     syncChannel.onmessage = (event) => {
       if (event.data && Array.isArray(event.data)) {
         machinesData = event.data;
-        localStorage.setItem('fleet_v8_full_clean', JSON.stringify(machinesData));
+        localStorage.setItem('fleet_v9_active_sync', JSON.stringify(machinesData));
         renderControllerView();
         renderEmailPreview();
       }
@@ -683,7 +683,7 @@
     }
 
     async function initData() {
-      const stored = localStorage.getItem('fleet_v8_full_clean');
+      const stored = localStorage.getItem('fleet_v9_active_sync');
       if (stored) {
         try { machinesData = JSON.parse(stored); } catch(e) { machinesData = generateDataset(); }
       } else {
@@ -696,11 +696,11 @@
       renderEmailPreview();
 
       await fetchCloudData();
-      setInterval(fetchCloudData, 4000);
+      setInterval(fetchCloudData, 3000);
     }
 
     function saveLocalCache() {
-      localStorage.setItem('fleet_v8_full_clean', JSON.stringify(machinesData));
+      localStorage.setItem('fleet_v9_active_sync', JSON.stringify(machinesData));
       try { syncChannel.postMessage(machinesData); } catch(e) {}
     }
 
@@ -744,10 +744,15 @@
     async function pushCloudData() {
       saveLocalCache();
       try {
+        const occurrences = machinesData.filter(m => m.status !== 'NORMAL');
+        const payload = {
+          name: 'gestao_br_fleet_v9',
+          data: { occurrences: occurrences }
+        };
         const response = await fetch(CLOUD_DB_URL, {
-          method: 'POST',
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(machinesData)
+          body: JSON.stringify(payload)
         });
         if (response.ok) {
           setCloudBadgeStatus(true);
@@ -764,20 +769,34 @@
       try {
         const response = await fetch(CLOUD_DB_URL);
         if (response.ok) {
-          const cloudList = await response.json();
-          if (cloudList && Array.isArray(cloudList) && cloudList.length > 0) {
-            const newIssuesCount = cloudList.filter(m => m.status !== 'NORMAL').length;
-            if (lastKnownIssueCount !== 0 && newIssuesCount > lastKnownIssueCount) {
-              showRealtimeToast(`Nova ocorrência registrada na nuvem!`);
+          const result = await response.json();
+          const cloudOccurrences = (result && result.data && Array.isArray(result.data.occurrences)) ? result.data.occurrences : [];
+          
+          const newDataset = generateDataset();
+          cloudOccurrences.forEach(occ => {
+            const target = newDataset.find(m => m.id === occ.id);
+            if (target) {
+              target.status = occ.status;
+              target.issue = occ.issue;
+              target.reporter = occ.reporter;
+              target.reportedAt = occ.reportedAt;
+              target.actionStage = occ.actionStage;
+              target.actionNote = occ.actionNote;
+              target.lastActionAt = occ.lastActionAt;
             }
-            lastKnownIssueCount = newIssuesCount;
+          });
 
-            machinesData = cloudList;
-            saveLocalCache();
-            renderControllerView();
-            renderEmailPreview();
-            setCloudBadgeStatus(true);
+          const newIssuesCount = newDataset.filter(m => m.status !== 'NORMAL').length;
+          if (lastKnownIssueCount !== 0 && newIssuesCount > lastKnownIssueCount) {
+            showRealtimeToast(`Nova ocorrência registrada na nuvem!`);
           }
+          lastKnownIssueCount = newIssuesCount;
+
+          machinesData = newDataset;
+          saveLocalCache();
+          renderControllerView();
+          renderEmailPreview();
+          setCloudBadgeStatus(true);
         }
       } catch (err) {
         console.warn('Fetch Cloud Error:', err);
