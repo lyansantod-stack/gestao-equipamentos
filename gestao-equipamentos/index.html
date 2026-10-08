@@ -28,7 +28,7 @@
               <span>Nuvem Sincronizada</span>
             </span>
           </div>
-          <p class="text-xs text-[var(--muted-foreground)]">437 Equipamentos • 6 Clientes (Segunda) • Sincronização Automática</p>
+          <p class="text-xs text-[var(--muted-foreground)]"><span id="header-total-count">146</span> Equipamentos Cadastrados • 7 Técnicos • Base Limpa</p>
         </div>
       </div>
 
@@ -54,11 +54,11 @@
       <div class="flex items-center gap-2">
         <button onclick="forceCloudSync()" title="Forçar sincronização com a nuvem" 
           class="text-xs px-2.5 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold flex items-center gap-1">
-          <span>☁️</span> Sincronizar Agora
+          <span>☁️</span> Sincronizar
         </button>
-        <button onclick="resetData()" title="Restaurar dados de demonstração" 
+        <button onclick="resetData()" title="Limpar e resetar banco" 
           class="text-xs px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--background)] text-[var(--muted-foreground)] flex items-center gap-1">
-          <span>🔄</span> Resetar
+          <span>🔄</span> Resetar Base Limpa
         </button>
       </div>
     </div>
@@ -67,7 +67,6 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-7xl mx-auto p-4 sm:p-6">
 
-    <!-- REAL-TIME ALERT BANNER FOR CONTROLLER -->
     <div id="realtime-toast" class="hidden mb-4 p-3 bg-blue-600 text-white rounded-xl shadow-lg flex items-center justify-between text-xs font-semibold">
       <div class="flex items-center gap-2">
         <span class="text-base">🔔</span>
@@ -86,10 +85,10 @@
         <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
           <div class="flex justify-between items-start">
             <span class="text-xs font-medium text-[var(--muted-foreground)]">Total de Equipamentos</span>
-            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-mono font-bold">437 EQUP</span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-mono font-bold" id="badge-total-equp">146 EQUP</span>
           </div>
-          <p class="text-2xl font-bold mt-1 text-[var(--foreground)]" id="stat-total">437</p>
-          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">6 Clientes • Rota Segunda-Feira</p>
+          <p class="text-2xl font-bold mt-1 text-[var(--foreground)]" id="stat-total">146</p>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Frota Geral de 7 Técnicos</p>
         </div>
 
         <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm relative overflow-hidden">
@@ -98,7 +97,7 @@
             <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Em Evidência</span>
           </div>
           <p class="text-2xl font-bold mt-1 text-amber-600" id="stat-issues">0</p>
-          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Sincronizado na Nuvem</p>
+          <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Requer atenção imediata</p>
         </div>
 
         <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm">
@@ -115,8 +114,19 @@
             <span class="text-xs font-medium text-emerald-600">Sem Ocorrências (OK)</span>
             <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Ocultas</span>
           </div>
-          <p class="text-2xl font-bold mt-1 text-emerald-600" id="stat-normal">0</p>
+          <p class="text-2xl font-bold mt-1 text-emerald-600" id="stat-normal">146</p>
           <p class="text-[11px] text-[var(--muted-foreground)] mt-1">Operando normalmente</p>
+        </div>
+      </div>
+
+      <!-- SUMMARY BY TECHNICIAN BAR -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-2">
+        <h4 class="text-xs font-bold text-[var(--foreground)] flex items-center justify-between">
+          <span class="flex items-center gap-2">👨‍🔧 Distribuição dos 146 Equipamentos por Técnico Responsável:</span>
+          <span class="text-[10px] text-gray-500 font-mono">Clique no técnico para filtrar</span>
+        </h4>
+        <div id="tech-breakdown-list" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
+          <!-- Dynamically populated via JS -->
         </div>
       </div>
 
@@ -124,7 +134,6 @@
       <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm space-y-4">
         
         <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-          <!-- MODE TOGGLE -->
           <div class="flex items-center gap-3">
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="toggle-exception-only" class="sr-only peer" checked onchange="renderControllerView()">
@@ -132,49 +141,69 @@
             </label>
             <div>
               <span class="text-sm font-semibold text-[var(--foreground)] block">Modo "Gestão por Exceção"</span>
-              <span class="text-xs text-[var(--muted-foreground)]">Exibe somente equipamentos com pendências ativas.</span>
+              <span class="text-xs text-[var(--muted-foreground)]">Exibe somente equipamentos com problemas/observações. Oculta equipamentos OK (Normal).</span>
             </div>
           </div>
 
-          <!-- SEARCH INPUT -->
-          <input type="text" id="search-input" placeholder="Buscar por cliente, código ou máquina..." 
+          <input type="text" id="search-input" placeholder="Buscar por cliente, código ou numeração EQP..." 
             oninput="renderControllerView()"
             class="px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-64">
         </div>
 
-        <!-- CLIENT & TECHNICIAN SELECTOR FILTERS -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[var(--border)]">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-[var(--border)]">
           <div>
             <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Técnico:</label>
             <select id="filter-tech" onchange="renderControllerView()" 
-              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="all">Todos os Técnicos</option>
-              <option value="Técnico Bruno" selected>👨‍🔧 Técnico Bruno (Segunda-Feira)</option>
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todos os 7 Técnicos</option>
+              <option value="Técnico João">👨‍🔧 Técnico João (15 EQP)</option>
+              <option value="Técnico Cauê">👨‍🔧 Técnico Cauê (30 EQP)</option>
+              <option value="Técnico Anderson">👨‍🔧 Técnico Anderson (34 EQP)</option>
+              <option value="Técnico Otávio">👨‍🔧 Técnico Otávio (22 EQP)</option>
+              <option value="Técnico Antônio">👨‍🔧 Técnico Antônio (22 EQP)</option>
+              <option value="Técnico Francisco">👨‍🔧 Técnico Francisco (16 EQP)</option>
+              <option value="Técnico Bruno">👨‍🔧 Técnico Bruno (7 EQP)</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Cliente / Empreendimento:</label>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Região / Estado:</label>
+            <select id="filter-region" onchange="renderControllerView()" 
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todas as Regiões</option>
+              <option value="SP">📍 São Paulo (SP)</option>
+              <option value="BA">📍 Bahia (BA)</option>
+              <option value="PE">📍 Pernambuco (PE)</option>
+              <option value="GO">📍 Goiás (GO)</option>
+              <option value="DF">📍 Distrito Federal (DF)</option>
+              <option value="RS">📍 Rio Grande do Sul (RS)</option>
+              <option value="SC">📍 Santa Catarina (SC)</option>
+              <option value="PR">📍 Paraná (PR)</option>
+              <option value="AL">📍 Alagoas (AL)</option>
+              <option value="RN">📍 Rio Grande do Norte (RN)</option>
+              <option value="PB">📍 Paraíba (PB)</option>
+              <option value="MG">📍 Minas Gerais (MG)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Cliente / EQP:</label>
             <select id="filter-client" onchange="renderControllerView()" 
-              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="all">Todos os 6 Clientes</option>
-              <option value="445">SÃO T. - MDIAS (Cod 445 - 13 EQUP)</option>
-              <option value="112">SALV-AEROPORTO (Cod 112 - 67 EQUP)</option>
-              <option value="296">CAMA-BRASKEM (Cod 296 - 52 EQUP)</option>
-              <option value="351">CAMA-SAINT GOBAIN (Cod 351 - 190 EQUP)</option>
-              <option value="151">FEIR-SAMS (Cod 151 - 69 EQUP)</option>
-              <option value="131">SALV-SAMS (Cod 131 - 46 EQUP)</option>
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todos os Equipamentos</option>
+              <!-- Dynamically populated via JS -->
             </select>
           </div>
 
           <div>
             <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Status da Máquina:</label>
             <select id="filter-status" onchange="renderControllerView()" 
-              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
               <option value="all">Todos os Status</option>
               <option value="DESLIGADA">🔴 Desligada</option>
               <option value="FALTA_PECA">🟡 Falta de Peça</option>
               <option value="MANUTENCAO">🟠 Em Manutenção</option>
+              <option value="DESMOBILIZACAO">🚚 Agendada Desmobilização</option>
             </select>
           </div>
         </div>
@@ -187,19 +216,21 @@
       </div>
 
       <!-- EMPTY STATE WHEN ALL MACHINES ARE OK -->
-      <div id="empty-state" class="hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-12 text-center max-w-xl mx-auto my-8">
-        <div class="text-5xl mb-3">🎉</div>
-        <h3 class="text-lg font-bold text-[var(--foreground)]">Nenhuma pendência ativa nos 6 clientes!</h3>
-        <p class="text-sm text-[var(--muted-foreground)] mt-1">Todos os 437 equipamentos da rota de Segunda-Feira (Técnico Bruno) estão operando normalmente.</p>
-        <button onclick="switchView('mobile')" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow">
-          📲 Simular lançamento pelo celular
-        </button>
+      <div id="empty-state" class="hidden bg-[var(--card)] border border-[var(--border)] rounded-2xl p-10 text-center max-w-xl mx-auto my-8 space-y-3">
+        <div class="text-5xl">🎉</div>
+        <h3 class="text-lg font-bold text-[var(--foreground)]">Nenhuma pendência ativa na frota!</h3>
+        <p class="text-xs text-[var(--muted-foreground)]">Todos os 146 equipamentos cadastrados dos 7 técnicos estão operando normalmente. Nenhuma exceção a tratar neste momento.</p>
+        <div class="pt-2">
+          <button onclick="switchView('mobile')" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all">
+            📲 Simular Lançamento pelo Celular do Técnico
+          </button>
+        </div>
       </div>
 
     </section>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 2: VISAO DO CAMPO / CELULAR (TECNICO BRUNO)                          -->
+    <!-- VIEW 2: VISAO DO CAMPO / CELULAR                                          -->
     <!-- ========================================================================= -->
     <section id="view-mobile" class="hidden max-w-md mx-auto">
       
@@ -210,36 +241,37 @@
             <span class="text-[10px] font-bold tracking-wider uppercase text-blue-600">Aplicação Mobile do Técnico</span>
             <h2 class="text-base font-bold text-[var(--foreground)]">Lançamento de Ocorrência</h2>
           </div>
-          <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-1 rounded-lg">👨‍🔧 Técnico Bruno</span>
+          <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-1 rounded-lg">📱 Modo Campo</span>
         </div>
 
-        <p class="text-xs text-[var(--muted-foreground)]">Selecione o cliente e o equipamento. A informação será enviada em tempo real para a nuvem.</p>
+        <p class="text-xs text-[var(--muted-foreground)]">Selecione o seu nome de técnico para filtrar seus clientes e reportar a falha em tempo real.</p>
 
         <form id="form-mobile-report" onsubmit="handleMobileSubmit(event)" class="space-y-4">
           
           <div>
             <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
-              1. Cliente / Empreendimento (Segunda-Feira) <span class="text-red-500">*</span>
+              1. Selecione o Técnico Responsável <span class="text-red-500">*</span>
             </label>
-            <select id="mobile-client-select" onchange="onMobileClientChange()" required 
+            <select id="mobile-tech-select" onchange="onMobileTechChange()" required 
               class="w-full px-3 py-2.5 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
-              <option value="">-- Selecione o Cliente --</option>
-              <option value="445">SÃO T. - MDIAS (Cliente 445 - 13 EQUP)</option>
-              <option value="112">SALV-AEROPORTO (Cliente 112 - 67 EQUP)</option>
-              <option value="296">CAMA-BRASKEM (Cliente 296 - 52 EQUP)</option>
-              <option value="351">CAMA-SAINT GOBAIN (Cliente 351 - 190 EQUP)</option>
-              <option value="151">FEIR-SAMS (Cliente 151 - 69 EQUP)</option>
-              <option value="131">SALV-SAMS (Cliente 131 - 46 EQUP)</option>
+              <option value="">-- Selecione o Técnico --</option>
+              <option value="Técnico João">👨‍🔧 Técnico João (15 Equipamentos)</option>
+              <option value="Técnico Cauê">👨‍🔧 Técnico Cauê (30 Equipamentos)</option>
+              <option value="Técnico Anderson">👨‍🔧 Técnico Anderson (34 Equipamentos)</option>
+              <option value="Técnico Otávio">👨‍🔧 Técnico Otávio (22 Equipamentos)</option>
+              <option value="Técnico Antônio">👨‍🔧 Técnico Antônio (22 Equipamentos)</option>
+              <option value="Técnico Francisco">👨‍🔧 Técnico Francisco (16 Equipamentos)</option>
+              <option value="Técnico Bruno">👨‍🔧 Técnico Bruno (7 Equipamentos)</option>
             </select>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
-              2. Equipamento do Cliente <span class="text-red-500">*</span>
+              2. Cliente & Numeração do Equipamento (EQP) <span class="text-red-500">*</span>
             </label>
             <select id="mobile-equipment-select" required 
-              class="w-full px-3 py-2.5 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="">-- Primeiro escolha o Cliente acima --</option>
+              class="w-full px-3 py-2.5 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="">-- Primeiro selecione o Técnico acima --</option>
             </select>
           </div>
 
@@ -260,26 +292,30 @@
                 <input type="radio" name="mobile-status" value="MANUTENCAO" required class="text-orange-600 focus:ring-orange-500">
                 <span class="text-xs font-medium text-orange-600">🟠 Manutenção</span>
               </label>
-              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-emerald-400">
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-purple-400">
+                <input type="radio" name="mobile-status" value="DESMOBILIZACAO" required class="text-purple-600 focus:ring-purple-500">
+                <span class="text-xs font-medium text-purple-700">🚚 Desmobilização</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-emerald-400 col-span-2">
                 <input type="radio" name="mobile-status" value="NORMAL" required class="text-emerald-600 focus:ring-emerald-500">
-                <span class="text-xs font-medium text-emerald-600">🟢 Normal / OK</span>
+                <span class="text-xs font-medium text-emerald-600">🟢 Normal / Operando sem Falha (OK)</span>
               </label>
             </div>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
-              4. Observação / Motivo do Problema <span class="text-red-500">*</span>
+              4. Observação / Motivo da Ocorrência <span class="text-red-500">*</span>
             </label>
-            <textarea id="mobile-notes" rows="3" required placeholder="Ex: Placa de controle queimada por oscilação de tensão. Necessita substituição..."
+            <textarea id="mobile-notes" rows="3" required placeholder="Descreva o problema ou detalhes sobre a desmobilização do equipamento..."
               class="w-full px-3 py-2 rounded-xl text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-[var(--foreground)] mb-1">
-              5. Técnico Responsável <span class="text-red-500">*</span>
+              5. Nome Registrado no Relatório
             </label>
-            <input type="text" id="mobile-reporter" required value="Bruno" readonly
+            <input type="text" id="mobile-reporter-display" required value="Nenhum técnico selecionado" readonly
               class="w-full px-3 py-2 rounded-xl text-xs bg-gray-100 border border-[var(--border)] text-gray-700 font-bold outline-none cursor-not-allowed">
           </div>
 
@@ -298,7 +334,7 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- VIEW 3: ALERTAS AUTOMATICOS & RESUMO POR CLIENTE                          -->
+    <!-- VIEW 3: ALERTAS AUTOMATICOS & RESUMO                                      -->
     <!-- ========================================================================= -->
     <section id="view-email" class="hidden space-y-6 max-w-4xl mx-auto">
       
@@ -308,18 +344,18 @@
             ✉️
           </div>
           <div>
-            <h2 class="text-base font-bold text-[var(--foreground)]">Relatório Consolidado por Cliente e Técnico</h2>
-            <p class="text-xs text-[var(--muted-foreground)]">Disparo automático de resumos matinais agrupados por empreendimento</p>
+            <h2 class="text-base font-bold text-[var(--foreground)]">Relatório Consolidado Diário</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Resumo matinal automático agrupado por técnico e estado</p>
           </div>
         </div>
 
         <div class="border border-[var(--border)] rounded-xl overflow-hidden bg-white text-gray-800 shadow-sm font-sans">
           <div class="bg-gray-100 px-4 py-2 border-b border-gray-200 text-xs text-gray-600 flex justify-between items-center">
             <span><strong>De:</strong> sistema-equipamentos@empresa.com.br</span>
-            <span class="text-[10px] font-mono text-gray-500">Relatório da Rota de Segunda-Feira</span>
+            <span class="text-[10px] font-mono text-gray-500">Relatório da Frota Nacional</span>
           </div>
           <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 text-xs text-gray-700">
-            <strong>Assunto:</strong> [RESUMO DE EQUIPAMENTOS] 🚨 Ocorrências Ativas na Nuvem (Rota Segunda-Feira)
+            <strong>Assunto:</strong> [RESUMO DE EQUIPAMENTOS] 🚨 Ocorrências Ativas na Nuvem (146 Equipamentos)
           </div>
           <div class="p-5 text-xs space-y-3" id="email-preview-body">
             <!-- Dynamic content via JS -->
@@ -338,48 +374,69 @@
 
   </main>
 
-  <!-- MODAL FOR CONTROLLER -->
-  <div id="modal-update" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+  <!-- MODAL FOR CONTROLLER (ALTA VISIBILIDADE E CONTRASTE) -->
+  <div id="modal-update" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
       
-      <div class="flex justify-between items-start border-b border-[var(--border)] pb-3">
+      <!-- MODAL HEADER -->
+      <div class="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
         <div>
-          <span class="text-[10px] font-bold text-blue-600 tracking-wider uppercase">Atualização do Controlador</span>
-          <h3 id="modal-machine-title" class="text-base font-bold text-[var(--foreground)]">Cliente - Máquina</h3>
+          <span class="text-[11px] font-extrabold text-blue-600 dark:text-blue-400 tracking-wider uppercase flex items-center gap-1.5">
+            <span>✏️</span> Atualização do Controlador
+          </span>
+          <h3 id="modal-machine-title" class="text-lg font-bold text-slate-900 dark:text-white leading-snug mt-0.5">Cliente - Máquina</h3>
         </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center font-bold text-base transition-colors">&times;</button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <div class="p-3 bg-[var(--background)] rounded-xl border border-[var(--border)] space-y-1">
-          <div class="font-semibold text-[var(--foreground)]">Ocorrência Reportada pelo Técnico:</div>
-          <div id="modal-issue-desc" class="text-[var(--muted-foreground)]">--</div>
-          <div id="modal-reporter-info" class="text-[10px] text-gray-500 font-mono mt-1">--</div>
+      <!-- MODAL CONTENT BODY -->
+      <div class="space-y-4 text-xs">
+        
+        <!-- OCCURRENCE DETAILS BOX (HIGH CONTRAST) -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">Ocorrência Reportada pelo Técnico:</span>
+            <span id="modal-status-badge" class="text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">--</span>
+          </div>
+          <div id="modal-issue-desc" class="text-slate-900 dark:text-slate-100 text-xs font-semibold leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner">
+            --
+          </div>
+          <div id="modal-reporter-info" class="text-[11px] text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
+            <span>👤</span> <span id="modal-reporter-text">--</span>
+          </div>
         </div>
 
-        <div>
-          <label class="block font-semibold text-[var(--foreground)] mb-1">Evolução da Ação pelo Controlador:</label>
-          <select id="modal-action-stage" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none font-medium">
+        <!-- ACTION STAGE SELECTION DROPDOWN -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-slate-900 dark:text-slate-100 text-xs">
+            Evolução da Ação pelo Controlador:
+          </label>
+          <select id="modal-action-stage" class="w-full px-3.5 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none shadow-sm cursor-pointer">
             <option value="REGISTRADO">🟡 Ocorrência Registrada / Em Análise</option>
             <option value="PECA_SOLICITADA">📦 Peça Solicitada ao Fornecedor</option>
             <option value="TECNICO_AGENDADO">👨‍🔧 Manutenção em Andamento</option>
-            <option value="RESOLVIDO">🟢 PROBLEMA RESOLVIDO (Dar Baixa)</option>
+            <option value="DESMOBILIZACAO_AGENDADA">🚚 Agendada a Desmobilização do Equipamento (Retorno à Fábrica)</option>
+            <option value="RESOLVIDO">🟢 PROBLEMA RESOLVIDO (Dar Baixa / Ocultar da Exceção)</option>
           </select>
         </div>
 
-        <div>
-          <label class="block font-semibold text-[var(--foreground)] mb-1">Nota de Acompanhamento / Próximo Passo:</label>
-          <input type="text" id="modal-action-note" placeholder="Ex: Peça #4489 comprada. Substituição em andamento."
-            class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none">
+        <!-- ACTION NOTE INPUT -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-slate-900 dark:text-slate-100 text-xs">
+            Nota de Acompanhamento / Próximo Passo:
+          </label>
+          <input type="text" id="modal-action-note" placeholder="Ex: Equipamento será desmobilizado no dia 13/10/2026. Logística agendada."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-3 border-t border-[var(--border)]">
-        <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-xs font-semibold border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--background)]">
+      <!-- MODAL FOOTER BUTTONS -->
+      <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <button onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           Cancelar
         </button>
-        <button onclick="saveControllerAction()" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow">
-          Salvar & Sincronizar na Nuvem
+        <button onclick="saveControllerAction()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-md transition-all">
+          💾 Salvar & Sincronizar na Nuvem
         </button>
       </div>
 
@@ -387,34 +444,231 @@
   </div>
 
   <script>
-    const CLOUD_DB_URL = 'https://gestao-equipamentos-br-default-rtdb.firebaseio.com/fleet_v2.json';
+    // CLOUD DATABASE URL FOR CLEAN FULL 146 EQUIPMENTS DATASET
+    const CLOUD_DB_URL = '/.netlify/functions/sync';
 
-    const CLIENTS_BRUNO = [
-      { code: '445', name: 'SÃO T. - MDIAS', equipCount: 13, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
-      { code: '112', name: 'SALV-AEROPORTO', equipCount: 67, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
-      { code: '296', name: 'CAMA-BRASKEM', equipCount: 52, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
-      { code: '351', name: 'CAMA-SAINT GOBAIN', equipCount: 190, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
-      { code: '151', name: 'FEIR-SAMS', equipCount: 69, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' },
-      { code: '131', name: 'SALV-SAMS', equipCount: 46, day: 'SEGUNDA-FEIRA', tech: 'Técnico Bruno' }
+    // COMPLETE 146 EQUIPMENTS DATASET ACROSS 7 TECHNICIANS
+    const INITIAL_EQUIPMENTS = [
+      // Técnico João (15)
+      { clientName: 'GUAI-CARREFOUR', clientCode: '241', equipNumber: '119', tech: 'Técnico João', state: 'SP' },
+      { clientName: 'PORT-HPC BIG', clientCode: '81', equipNumber: '122', tech: 'Técnico João', state: 'RS' },
+      { clientName: 'CARL-YAZAKI', clientCode: '397', equipNumber: '204', tech: 'Técnico João', state: 'PR' },
+      { clientName: 'STO - YAZAKI', clientCode: '345', equipNumber: '72', tech: 'Técnico João', state: 'PR' },
+      { clientName: 'HORI-JOHN D', clientCode: '403', equipNumber: '41', tech: 'Técnico João', state: 'SC' },
+      { clientName: 'JARAGUA - WEG', clientCode: '459', equipNumber: '134', tech: 'Técnico João', state: 'SC' },
+      { clientName: 'POME-NEZTSCH', clientCode: '329', equipNumber: '202', tech: 'Técnico João', state: 'SC' },
+      { clientName: 'OURI-CASTOR', clientCode: '390', equipNumber: '194', tech: 'Técnico João', state: 'SP' },
+      { clientName: 'OURI-SUPER', clientCode: '369', equipNumber: '110', tech: 'Técnico João', state: 'SP' },
+      { clientName: 'TELE-BRASLUMBER', clientCode: '313', equipNumber: '121', tech: 'Técnico João', state: 'PR' },
+      { clientName: 'IRAT-YAZAKI', clientCode: '314', equipNumber: '71', tech: 'Técnico João', state: 'PR' },
+      { clientName: 'PASSO F - JBS', clientCode: '457', equipNumber: '129', tech: 'Técnico João', state: 'RS' },
+      { clientName: 'ITAJ-SEARA', clientCode: '389', equipNumber: '131', tech: 'Técnico João', state: 'SC' },
+      { clientName: 'ABELA-AURORA', clientCode: '436', equipNumber: '172', tech: 'Técnico João', state: 'SC' },
+      { clientName: 'PELO-HPR BIG', clientCode: '108', equipNumber: '82', tech: 'Técnico João', state: 'RS' },
+
+      // Técnico Cauê (30)
+      { clientName: 'SAN A-SAMS', clientCode: '30', equipNumber: '63', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'JOAO-ROCHE', clientCode: '328', equipNumber: '137', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: '02-CHAC-CARREFOUR', clientCode: '236', equipNumber: '117', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'MORU-IBIS', clientCode: '323', equipNumber: '124', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'VILA O.-INSPER', clientCode: '349', equipNumber: '192', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'ITAI-INSPER', clientCode: '349', equipNumber: '87', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'VILA 0.-PULLMAN', clientCode: '301', equipNumber: '74', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'BUTA-FACULDADE', clientCode: '270', equipNumber: '200', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'MORU-HOSPITAL', clientCode: '270', equipNumber: '139', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'TEOD-PÃO DE AÇU', clientCode: '173', equipNumber: '120', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SÃO P.-MASP', clientCode: '394', equipNumber: '156', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'PINH-INSTITUTO', clientCode: '416', equipNumber: '276', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'PARA-IBIS', clientCode: '362', equipNumber: '191', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'IBIR-MERCURE', clientCode: '283', equipNumber: '85', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'VILA P-CEPAM', clientCode: '2', equipNumber: '8', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SÃO P.-FESTO', clientCode: '144', equipNumber: '68', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SBC-SAMS', clientCode: '29', equipNumber: '58', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SBC-BASF', clientCode: '378', equipNumber: '183', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SBC-BRASIL CD', clientCode: '299', equipNumber: '109', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: '01-EURO-ITP', clientCode: '42', equipNumber: '45', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: '02-EURO-ITP', clientCode: '42', equipNumber: '89', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: '03-EURO-ITP', clientCode: '42', equipNumber: '6', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'ITAP-LUFT AGRO', clientCode: '334', equipNumber: '10', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'ITAP-LUFT BC16', clientCode: '341', equipNumber: '140', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'PAMP -CARREFO', clientCode: '460', equipNumber: '30', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'MAIR-DSM', clientCode: '446', equipNumber: '99', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'ALUM-SODEXO', clientCode: '118', equipNumber: '31', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SORO-CARREFOUR', clientCode: '207', equipNumber: '114', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'SORO-SAMS', clientCode: '33', equipNumber: '39', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'TATU-YAZAKI', clientCode: '413', equipNumber: '56', tech: 'Técnico Cauê', state: 'SP' },
+
+      // Técnico Anderson (34)
+      { clientName: 'TAUB-CARREFOUR', clientCode: '210', equipNumber: '116', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'MOGI-AGCO', clientCode: '322', equipNumber: '79', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'Pepsico', clientCode: '411', equipNumber: '92', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'VARZ-PLASINCO', clientCode: '444', equipNumber: '199', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'C.LIMP-THYSSENKR', clientCode: '169', equipNumber: '143', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GRU - IBIS', clientCode: '467', equipNumber: '198', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GUAR-HITACHI', clientCode: '326', equipNumber: '80', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GRU-MINEBEA', clientCode: '447', equipNumber: '163', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GUAR-PULLMAN', clientCode: '321', equipNumber: '123', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GRU-CONTINENTAL', clientCode: '333', equipNumber: '161', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'SÃO P.-SAMS', clientCode: '27', equipNumber: '28', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'CENT-NOVOTEL', clientCode: '325', equipNumber: '17', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'BARRA-IBIS-50', clientCode: '415', equipNumber: '88', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'BOM R.-SAMS', clientCode: '26', equipNumber: '91', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'FREG-MOMENTA', clientCode: '45', equipNumber: '154', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GUAR-BRASIL CLIA', clientCode: '300', equipNumber: '37', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'GUAR-CARREFOUR', clientCode: '211', equipNumber: '133', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'SANT-BRASIL TECO', clientCode: '8', equipNumber: '130', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'SANT-BRASIL CLIA', clientCode: '298', equipNumber: '36', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'SANT-MOINHO', clientCode: '297', equipNumber: '24', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'SÃO V. CARREFOUR', clientCode: '205', equipNumber: '38', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'MUTI-SIEMENS', clientCode: '402', equipNumber: '155', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'AGUA B.-E-BUSINESS', clientCode: '13', equipNumber: '86', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: '01-JAGU-GIVAUNDA', clientCode: '303', equipNumber: '78', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: '01-OSAS-CARREFOU', clientCode: '12', equipNumber: '77', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: '02-OSAS-CARREFOU', clientCode: '31', equipNumber: '27', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'BARU-IFF 1', clientCode: '376', equipNumber: '196', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'TAMB-SAMS', clientCode: '28', equipNumber: '26', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'TAMB-BIG', clientCode: '231', equipNumber: '40', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'CAJA-LUFT', clientCode: '374', equipNumber: '84', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'CAJA-RENNER', clientCode: '5', equipNumber: '16', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'CAJA-GRAFICA', clientCode: '172', equipNumber: '101', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'JUND-SIEMENS IND', clientCode: '295', equipNumber: '157', tech: 'Técnico Anderson', state: 'SP' },
+      { clientName: 'JUND-SIEMENS EM', clientCode: '9', equipNumber: '175', tech: 'Técnico Anderson', state: 'SP' },
+
+      // Técnico Otávio (22)
+      { clientName: 'RP-SANTA HELEN', clientCode: '408', equipNumber: '118', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'RP- RBS - CARREFOUR', clientCode: '34', equipNumber: '43', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'RP-RPN - CARREFOUR', clientCode: '209', equipNumber: '112', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'MOGI G-MAHLE', clientCode: '393', equipNumber: '180', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'AMPA-JBS', clientCode: '282', equipNumber: '93', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'LIME-MAHLE', clientCode: '388', equipNumber: '193', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'LIME-FORVIA', clientCode: '304', equipNumber: '96', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'SEARA- PASSOS', clientCode: '434', equipNumber: '164', tech: 'Técnico Otávio', state: 'MG' },
+      { clientName: 'PIRA-CAREFOUR', clientCode: '206', equipNumber: '113', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'RIO P.-SODEXO', clientCode: '429', equipNumber: '23', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'ST.BAR-SIEMENS', clientCode: '41', equipNumber: '18', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'PAUL-BOEHRINGER', clientCode: '385', equipNumber: '188', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'CAMP-THE MALL', clientCode: '311', equipNumber: '135', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'INDA-ALERE', clientCode: '317', equipNumber: '160', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'CAMP-BRIDGESTONE', clientCode: '373', equipNumber: '181', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'CAMP-RAMADA', clientCode: '377', equipNumber: '158', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'SJRP-SJP -CARR', clientCode: '267', equipNumber: '145', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'SJRP-JRS-CARR', clientCode: '32', equipNumber: '44', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'CATA-COFCO', clientCode: '417', equipNumber: '22', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'SESB-COFCO', clientCode: '418', equipNumber: '25', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'MERI-COFCO', clientCode: '24', equipNumber: '34', tech: 'Técnico Otávio', state: 'SP' },
+      { clientName: 'CAMP-SANTA CASA', clientCode: '412', equipNumber: '33', tech: 'Técnico Otávio', state: 'SP' },
+
+      // Técnico Antônio (22)
+      { clientName: 'MACE-SAMS', clientCode: '366', equipNumber: '90', tech: 'Técnico Antônio', state: 'AL' },
+      { clientName: 'IPIO-SALINAS', clientCode: '437', equipNumber: '83', tech: 'Técnico Antônio', state: 'AL' },
+      { clientName: '01 JAPA-RESORT', clientCode: '343', equipNumber: '127', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: '02 JAPA-RESORT', clientCode: '343', equipNumber: '186', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: '01 MARA-SALINAS', clientCode: '344', equipNumber: '187', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: '02 MARA-SALINAS', clientCode: '344', equipNumber: '70', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'JABO-MURIBECA', clientCode: '128', equipNumber: '125', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'RECI-ACCOR', clientCode: '318', equipNumber: '138', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'RECI-SAMS', clientCode: '194', equipNumber: '106', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'CAÇO-CARREFOUR', clientCode: '129', equipNumber: '75', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'TOTO-GERDAU', clientCode: '370', equipNumber: '102', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'RECI-HOSPITAL', clientCode: '264', equipNumber: '144', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'CABO-ACHE', clientCode: '352', equipNumber: '182', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'BONI-YAZAKI', clientCode: '134', equipNumber: '64', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'SUAP-NACIONAL', clientCode: '461', equipNumber: '94', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'MARA-CAN PACK', clientCode: '134', equipNumber: '128', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'CAIS-NACIONA GAS', clientCode: '134', equipNumber: '59', tech: 'Técnico Antônio', state: 'PE' },
+      { clientName: 'MOSSO-CARREFOUR', clientCode: '185', equipNumber: '105', tech: 'Técnico Antônio', state: 'RN' },
+      { clientName: 'NATA-NTL - CARR', clientCode: '200', equipNumber: '66', tech: 'Técnico Antônio', state: 'RN' },
+      { clientName: 'NATA-NZN - CARR', clientCode: '202', equipNumber: '65', tech: 'Técnico Antônio', state: 'RN' },
+      { clientName: 'NATA-SAMS', clientCode: '124', equipNumber: '73', tech: 'Técnico Antônio', state: 'RN' },
+      { clientName: 'CAMP G.-CARREFOU', clientCode: '166', equipNumber: '97', tech: 'Técnico Antônio', state: 'PB' },
+
+      // Técnico Francisco (16)
+      { clientName: 'AGU SF-CARREFOUR', clientCode: '392', equipNumber: '12', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'GUA F.-CARREFOUR', clientCode: '383', equipNumber: '61', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'SIA-SESC', clientCode: '433', equipNumber: '98', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'A.N-SENAC', clientCode: '355', equipNumber: '184', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'A N.- PN CARREFOUR', clientCode: '249', equipNumber: '104', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'A N.-BAN CARREFO', clientCode: '384', equipNumber: '53', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'SENA-SODEXO', clientCode: '293', equipNumber: '81', tech: 'Técnico Francisco', state: 'DF' },
+      { clientName: 'GOIA-CARREFOUR', clientCode: '250', equipNumber: '55', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'GOIA-HOSPITAL', clientCode: '438', equipNumber: '47', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'NEW P.-SODEXO', clientCode: '293', equipNumber: '111', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'NOVA V.-SS ALIME', clientCode: '410', equipNumber: '115', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'ITAB-SSA', clientCode: '414', equipNumber: '15', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'ANAP -BRAINFA', clientCode: '465', equipNumber: '174', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'CRIX-EXAL', clientCode: '354', equipNumber: '62', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'CHAP-USINA', clientCode: '391', equipNumber: '60', tech: 'Técnico Francisco', state: 'GO' },
+      { clientName: 'CATA-MITUSBISHI', clientCode: '337', equipNumber: '185', tech: 'Técnico Francisco', state: 'GO' },
+
+      // Técnico Bruno (7)
+      { clientName: 'SÃO T. - MDIAS', clientCode: '445', equipNumber: '13', tech: 'Técnico Bruno', state: 'BA' },
+      { clientName: 'SALV - SESC', clientCode: '407', equipNumber: '9', tech: 'Técnico Bruno', state: 'BA' },
+      { clientName: 'SALV-AEROPORTO', clientCode: '112', equipNumber: '67', tech: 'Técnico Bruno', state: 'BA' },
+      { clientName: 'CAMA-BRASKEM', clientCode: '296', equipNumber: '52', tech: 'Técnico Bruno', state: 'BA' },
+      { clientName: 'CAMA-SAINT GOBAIN', clientCode: '351', equipNumber: '190', tech: 'Técnico Bruno', state: 'BA' },
+      { clientName: 'FEIR-SAMS', clientCode: '151', equipNumber: '69', tech: 'Técnico Bruno', state: 'BA' },
+      { clientName: 'SALV-SAMS', clientCode: '131', equipNumber: '46', tech: 'Técnico Bruno', state: 'BA' }
     ];
 
     let machinesData = [];
-    let isCloudOnline = true;
     let lastKnownIssueCount = 0;
+
+    const syncChannel = new BroadcastChannel('fleet_sync_channel');
+    syncChannel.onmessage = (event) => {
+      if (event.data && Array.isArray(event.data)) {
+        machinesData = event.data;
+        localStorage.setItem('fleet_v8_full_clean', JSON.stringify(machinesData));
+        renderControllerView();
+        renderEmailPreview();
+      }
+    };
 
     function generateDataset() {
       const list = [];
-      CLIENTS_BRUNO.forEach(c => {
-        for (let i = 1; i <= c.equipCount; i++) {
-          const equipId = `EQUP-${c.code}-${String(i).padStart(3, '0')}`;
+      INITIAL_EQUIPMENTS.forEach(e => {
+        const id = `EQP-${e.clientCode}-${e.equipNumber}`;
+        if (id === 'EQP-42-6') {
+          // 03-EURO-ITP (Técnico Cauê)
           list.push({
-            id: equipId,
-            clientCode: c.code,
-            clientName: c.name,
-            tech: c.tech,
-            dayRoute: c.day,
-            equipNumber: i,
-            totalClientEquip: c.equipCount,
+            id: id,
+            clientCode: e.clientCode,
+            clientName: e.clientName,
+            equipNumber: e.equipNumber,
+            tech: e.tech,
+            state: e.state || 'SP',
+            status: 'MANUTENCAO',
+            issue: 'Manutenção ocorrera no dia 09/10/2026, alinhado com o Leandro e o Cauê - Sistema não comunica no portal',
+            reporter: 'Técnico Cauê',
+            reportedAt: new Date().toISOString(),
+            actionStage: 'TECNICO_AGENDADO',
+            actionNote: 'Manutenção alinhada para 09/10/2026 com Leandro e Cauê.',
+            lastActionAt: new Date().toISOString()
+          });
+        } else if (id === 'EQP-411-92') {
+          // Pepsico (Técnico Anderson)
+          list.push({
+            id: id,
+            clientCode: e.clientCode,
+            clientName: e.clientName,
+            equipNumber: e.equipNumber,
+            tech: e.tech,
+            state: e.state || 'SP',
+            status: 'DESMOBILIZACAO',
+            issue: 'Equipamento será desmobilizado no dia 13/10/2026.',
+            reporter: 'Técnico Anderson',
+            reportedAt: new Date().toISOString(),
+            actionStage: 'DESMOBILIZACAO_AGENDADA',
+            actionNote: 'Equipamento será desmobilizado no dia 13/10/2026. Retorno à fábrica.',
+            lastActionAt: new Date().toISOString()
+          });
+        } else {
+          list.push({
+            id: id,
+            clientCode: e.clientCode,
+            clientName: e.clientName,
+            equipNumber: e.equipNumber,
+            tech: e.tech,
+            state: e.state || 'SP',
             status: 'NORMAL',
             issue: null,
             reporter: null,
@@ -425,54 +679,19 @@
           });
         }
       });
-
-      const now = new Date();
-      const hoursAgo = (h) => new Date(now.getTime() - h * 60 * 60 * 1000).toISOString();
-
-      const m1 = list.find(m => m.clientCode === '351' && m.equipNumber === 14);
-      if (m1) {
-        m1.status = 'DESLIGADA';
-        m1.issue = 'Disjuntor principal armado por sobrecarga. Fonte auxiliar queimada.';
-        m1.reporter = 'Bruno (Técnico)';
-        m1.reportedAt = hoursAgo(52);
-        m1.actionStage = 'REGISTRADO';
-        m1.actionNote = 'Aguardando liberação de compra da fonte de reposição pelo cliente.';
-        m1.lastActionAt = hoursAgo(52);
-      }
-
-      const m2 = list.find(m => m.clientCode === '112' && m.equipNumber === 8);
-      if (m2) {
-        m2.status = 'FALTA_PECA';
-        m2.issue = 'Vazamento no retentor hidráulico. Equipamento isolado por segurança.';
-        m2.reporter = 'Bruno (Técnico)';
-        m2.reportedAt = hoursAgo(26);
-        m2.actionStage = 'PECA_SOLICITADA';
-        m2.actionNote = 'Retentor solicitado ao estoque central em SP.';
-        m2.lastActionAt = hoursAgo(26);
-      }
-
-      const m3 = list.find(m => m.clientCode === '151' && m.equipNumber === 3);
-      if (m3) {
-        m3.status = 'MANUTENCAO';
-        m3.issue = 'Ajuste de calibração periódica do leitor óptico.';
-        m3.reporter = 'Bruno (Técnico)';
-        m3.reportedAt = hoursAgo(5);
-        m3.actionStage = 'TECNICO_AGENDADO';
-        m3.actionNote = 'Técnico Bruno efetuando ajustes no local.';
-        m3.lastActionAt = hoursAgo(5);
-      }
-
       return list;
     }
 
     async function initData() {
-      const stored = localStorage.getItem('fleet_bruno_data_v2');
+      const stored = localStorage.getItem('fleet_v8_full_clean');
       if (stored) {
         try { machinesData = JSON.parse(stored); } catch(e) { machinesData = generateDataset(); }
       } else {
         machinesData = generateDataset();
       }
 
+      populateClientFilterOptions();
+      renderTechBreakdown();
       renderControllerView();
       renderEmailPreview();
 
@@ -481,19 +700,59 @@
     }
 
     function saveLocalCache() {
-      localStorage.setItem('fleet_bruno_data_v2', JSON.stringify(machinesData));
+      localStorage.setItem('fleet_v8_full_clean', JSON.stringify(machinesData));
+      try { syncChannel.postMessage(machinesData); } catch(e) {}
+    }
+
+    function populateClientFilterOptions() {
+      const select = document.getElementById('filter-client');
+      select.innerHTML = '<option value="all">Todos os Equipamentos</option>';
+      
+      machinesData.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.clientName} (Cod ${m.clientCode} | EQP N° ${m.equipNumber} - ${m.tech})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderTechBreakdown() {
+      const container = document.getElementById('tech-breakdown-list');
+      container.innerHTML = '';
+
+      const techCounts = {};
+      machinesData.forEach(m => {
+        techCounts[m.tech] = (techCounts[m.tech] || 0) + 1;
+      });
+
+      Object.keys(techCounts).forEach(techName => {
+        const item = document.createElement('button');
+        item.onclick = () => {
+          document.getElementById('filter-tech').value = techName;
+          renderControllerView();
+        };
+        item.className = 'p-2 bg-[var(--background)] hover:bg-blue-50 border border-[var(--border)] rounded-xl text-center smooth-transition text-left cursor-pointer';
+        item.innerHTML = `
+          <span class="text-[10px] text-gray-500 font-mono block">👨‍🔧 Responsável</span>
+          <span class="font-bold text-[var(--foreground)] truncate block text-xs" title="${techName}">${techName.replace('Técnico ', '')}</span>
+          <span class="text-[11px] text-blue-600 font-bold font-mono">${techCounts[techName]} EQUP</span>
+        `;
+        container.appendChild(item);
+      });
     }
 
     async function pushCloudData() {
       saveLocalCache();
       try {
         const response = await fetch(CLOUD_DB_URL, {
-          method: 'PUT',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(machinesData)
         });
         if (response.ok) {
           setCloudBadgeStatus(true);
+        } else {
+          setCloudBadgeStatus(false);
         }
       } catch (err) {
         console.warn('Sync Cloud Error:', err);
@@ -509,7 +768,7 @@
           if (cloudList && Array.isArray(cloudList) && cloudList.length > 0) {
             const newIssuesCount = cloudList.filter(m => m.status !== 'NORMAL').length;
             if (lastKnownIssueCount !== 0 && newIssuesCount > lastKnownIssueCount) {
-              showRealtimeToast(`Nova ocorrência registrada por um técnico no celular!`);
+              showRealtimeToast(`Nova ocorrência registrada na nuvem!`);
             }
             lastKnownIssueCount = newIssuesCount;
 
@@ -539,7 +798,7 @@
 
     async function forceCloudSync() {
       await fetchCloudData();
-      alert('☁️ Dados sincronizados com sucesso com o Banco de Dados na Nuvem!');
+      alert('☁️ Dados sincronizados com o Banco de Dados em Nuvem!');
     }
 
     function showRealtimeToast(msg) {
@@ -550,7 +809,7 @@
     }
 
     async function resetData() {
-      if (confirm('Deseja resetar os dados na nuvem e recarregar os testes do Técnico Bruno?')) {
+      if (confirm('Deseja resetar a base da nuvem e restaurar os 146 equipamentos com status limpo (Normal)?')) {
         machinesData = generateDataset();
         await pushCloudData();
         renderControllerView();
@@ -591,6 +850,8 @@
     function renderControllerView() {
       const isExceptionOnly = document.getElementById('toggle-exception-only').checked;
       const searchVal = document.getElementById('search-input').value.toLowerCase();
+      const techVal = document.getElementById('filter-tech').value;
+      const regionVal = document.getElementById('filter-region').value;
       const clientVal = document.getElementById('filter-client').value;
       const statusVal = document.getElementById('filter-status').value;
 
@@ -613,6 +874,8 @@
         }
       });
 
+      document.getElementById('header-total-count').textContent = totalCount;
+      document.getElementById('badge-total-equp').textContent = `${totalCount} EQUP`;
       document.getElementById('stat-total').textContent = totalCount;
       document.getElementById('stat-issues').textContent = issuesCount;
       document.getElementById('stat-overdue').textContent = overdueCount;
@@ -620,8 +883,10 @@
 
       const filtered = machinesData.filter(m => {
         if (isExceptionOnly && m.status === 'NORMAL') return false;
-        if (searchVal && !m.id.toLowerCase().includes(searchVal) && !m.clientName.toLowerCase().includes(searchVal) && !m.clientCode.includes(searchVal) && !(m.issue || '').toLowerCase().includes(searchVal)) return false;
-        if (clientVal !== 'all' && m.clientCode !== clientVal) return false;
+        if (searchVal && !m.id.toLowerCase().includes(searchVal) && !m.clientName.toLowerCase().includes(searchVal) && !m.clientCode.includes(searchVal) && !m.equipNumber.toString().includes(searchVal) && !(m.issue || '').toLowerCase().includes(searchVal)) return false;
+        if (techVal !== 'all' && m.tech !== techVal) return false;
+        if (regionVal !== 'all' && m.state !== regionVal) return false;
+        if (clientVal !== 'all' && m.id !== clientVal) return false;
         if (statusVal !== 'all' && m.status !== statusVal) return false;
         return true;
       });
@@ -659,12 +924,14 @@
         if (m.status === 'DESLIGADA') statusBadge = '<span class="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded text-[11px]">🔴 DESLIGADA</span>';
         else if (m.status === 'FALTA_PECA') statusBadge = '<span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-[11px]">🟡 FALTA DE PEÇA</span>';
         else if (m.status === 'MANUTENCAO') statusBadge = '<span class="bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded text-[11px]">🟠 MANUTENÇÃO</span>';
+        else if (m.status === 'DESMOBILIZACAO') statusBadge = '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[11px] border border-purple-200">🚚 DESMOBILIZAÇÃO</span>';
         else statusBadge = '<span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[11px]">🟢 NORMAL</span>';
 
         let stageText = '';
         if (m.actionStage === 'REGISTRADO') stageText = '🟡 Ocorrência Registrada';
         else if (m.actionStage === 'PECA_SOLICITADA') stageText = '📦 Peça Solicitada ao Fornecedor';
         else if (m.actionStage === 'TECNICO_AGENDADO') stageText = '👨‍🔧 Manutenção em Andamento';
+        else if (m.actionStage === 'DESMOBILIZACAO_AGENDADA') stageText = '🚚 Agendada a Desmobilização (Retorno à Fábrica)';
 
         card.className = `bg-[var(--card)] border ${borderClass} rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3 relative`;
 
@@ -672,9 +939,13 @@
           <div>
             <div class="flex items-start justify-between gap-2 mb-2">
               <div>
-                <span class="text-[10px] bg-gray-100 font-mono text-gray-700 px-1.5 py-0.5 rounded font-bold">Cliente ${m.clientCode}</span>
-                <h3 class="font-bold text-sm text-[var(--foreground)] leading-tight mt-0.5">${m.clientName}</h3>
-                <span class="text-[11px] text-[var(--muted-foreground)] font-mono">Máquina #${String(m.equipNumber).padStart(3, '0')} / ${m.totalClientEquip} EQUP</span>
+                <div class="flex items-center gap-1 flex-wrap">
+                  <span class="text-[10px] bg-blue-100 text-blue-800 font-mono px-1.5 py-0.5 rounded font-bold">EQP N° ${m.equipNumber}</span>
+                  <span class="text-[10px] bg-gray-100 text-gray-700 font-bold px-1.5 py-0.5 rounded border border-gray-200">Cod ${m.clientCode}</span>
+                  <span class="text-[10px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-200">📍 ${m.state}</span>
+                </div>
+                <h3 class="font-bold text-sm text-[var(--foreground)] leading-tight mt-1">${m.clientName}</h3>
+                <span class="text-[11px] text-[var(--muted-foreground)] font-medium">👨‍🔧 ${m.tech}</span>
               </div>
               <div>${statusBadge}</div>
             </div>
@@ -684,19 +955,18 @@
             ${isIssue ? `
               <div class="p-3 bg-[var(--background)] rounded-xl border border-[var(--border)] space-y-1 text-xs">
                 <div class="font-semibold text-[var(--foreground)]">Observação do Técnico:</div>
-                <div class="text-[var(--muted-foreground)]">${m.issue || 'Sem descrição.'}</div>
+                <div class="text-[var(--muted-foreground)] font-medium">${m.issue || 'Sem descrição.'}</div>
                 <div class="text-[10px] text-gray-500 mt-1 flex justify-between">
-                  <span>Técnico: <strong>${m.reporter || 'Bruno'}</strong></span>
-                  <span>Rota: ${m.dayRoute}</span>
+                  <span>Reportado por: <strong>${m.reporter || m.tech}</strong></span>
                 </div>
               </div>
               <div class="mt-2 text-xs">
                 <span class="font-semibold text-gray-700">Etapa Controlador:</span> 
-                <span class="text-blue-700 font-medium">${stageText}</span>
+                <span class="${m.actionStage === 'DESMOBILIZACAO_AGENDADA' ? 'text-purple-700 font-bold' : 'text-blue-700 font-medium'}">${stageText}</span>
                 ${m.actionNote ? `<p class="text-[11px] text-gray-500 italic mt-0.5">"${m.actionNote}"</p>` : ''}
               </div>
             ` : `
-              <p class="text-xs text-emerald-600 font-medium">Equipamento operando normalmente no cliente.</p>
+              <p class="text-xs text-emerald-600 font-medium">Equipamento N° ${m.equipNumber} operando normalmente.</p>
             `}
           </div>
 
@@ -715,32 +985,45 @@
       });
     }
 
-    function onMobileClientChange() {
-      const clientCode = document.getElementById('mobile-client-select').value;
+    function onMobileTechChange() {
+      const techName = document.getElementById('mobile-tech-select').value;
       const equipSelect = document.getElementById('mobile-equipment-select');
+      const displayInput = document.getElementById('mobile-reporter-display');
+      
       equipSelect.innerHTML = '<option value="">-- Selecione o Equipamento --</option>';
 
-      if (!clientCode) return;
+      if (!techName) {
+        displayInput.value = 'Nenhum técnico selecionado';
+        return;
+      }
 
-      const clientMachines = machinesData.filter(m => m.clientCode === clientCode);
-      clientMachines.forEach(m => {
+      displayInput.value = techName;
+
+      const techMachines = machinesData.filter(m => m.tech === techName);
+      techMachines.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.id;
         const hasIssue = m.status !== 'NORMAL' ? ` ⚠️ (${m.status})` : '';
-        opt.textContent = `Máquina #${String(m.equipNumber).padStart(3, '0')} (Total: ${m.totalClientEquip})${hasIssue}`;
+        opt.textContent = `${m.clientName} - EQP N° ${m.equipNumber} (Cod ${m.clientCode})${hasIssue}`;
         equipSelect.appendChild(opt);
       });
     }
 
     async function handleMobileSubmit(e) {
       e.preventDefault();
+      const techName = document.getElementById('mobile-tech-select').value;
       const equipId = document.getElementById('mobile-equipment-select').value;
       const status = document.querySelector('input[name="mobile-status"]:checked').value;
       const notes = document.getElementById('mobile-notes').value;
 
+      if (!techName || !equipId) {
+        alert('Por favor, selecione o técnico e o equipamento.');
+        return;
+      }
+
       const btn = document.getElementById('btn-submit-mobile');
       btn.disabled = true;
-      btn.innerHTML = `⏳ Sincronizando com a Nuvem...`;
+      btn.innerHTML = `⏳ Sincronizando na Nuvem...`;
 
       const target = machinesData.find(m => m.id === equipId);
       if (target) {
@@ -753,7 +1036,7 @@
           target.actionNote = '';
         } else {
           target.issue = notes;
-          target.reporter = 'Bruno';
+          target.reporter = techName;
           target.reportedAt = new Date().toISOString();
           target.lastActionAt = new Date().toISOString();
           target.actionStage = 'REGISTRADO';
@@ -783,9 +1066,20 @@
       const m = machinesData.find(x => x.id === id);
       if (!m) return;
 
-      document.getElementById('modal-machine-title').textContent = `${m.clientName} (Cod ${m.clientCode}) - Máquina #${String(m.equipNumber).padStart(3, '0')}`;
+      document.getElementById('modal-machine-title').textContent = `${m.clientName} (Cod ${m.clientCode}) - EQP N° ${m.equipNumber}`;
       document.getElementById('modal-issue-desc').textContent = m.issue || 'Sem descrição';
-      document.getElementById('modal-reporter-info').textContent = `Reportado pelo Técnico ${m.reporter || 'Bruno'} em ${new Date(m.reportedAt).toLocaleString('pt-BR')}`;
+      
+      const reportedDate = m.reportedAt ? new Date(m.reportedAt).toLocaleString('pt-BR') : 'Data recente';
+      document.getElementById('modal-reporter-text').textContent = `Reportado por ${m.reporter || m.tech} em ${reportedDate}`;
+      
+      const statusBadgeEl = document.getElementById('modal-status-badge');
+      if (m.status === 'DESLIGADA') statusBadgeEl.className = 'bg-red-100 text-red-800 border border-red-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
+      else if (m.status === 'FALTA_PECA') statusBadgeEl.className = 'bg-amber-100 text-amber-800 border border-amber-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
+      else if (m.status === 'MANUTENCAO') statusBadgeEl.className = 'bg-orange-100 text-orange-800 border border-orange-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
+      else if (m.status === 'DESMOBILIZACAO') statusBadgeEl.className = 'bg-purple-100 text-purple-800 border border-purple-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
+      else statusBadgeEl.className = 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
+      statusBadgeEl.textContent = m.status;
+
       document.getElementById('modal-action-stage').value = m.actionStage || 'REGISTRADO';
       document.getElementById('modal-action-note').value = m.actionNote || '';
 
@@ -831,43 +1125,46 @@
 
       let html = `
         <p class="font-bold text-gray-900">Prezado Controlador,</p>
-        <p class="text-gray-600">Este é o resumo consolidado da rota de <strong>Segunda-Feira (Técnico Bruno)</strong> com sincronização na nuvem.</p>
+        <p class="text-gray-600">Este é o resumo consolidado da frota de <strong>146 equipamentos cadastrados</strong> nos 7 técnicos.</p>
         
         <div class="my-3 p-3 bg-gray-100 rounded-lg border border-gray-200 flex flex-wrap gap-4 text-xs font-semibold">
-          <span>Total Equipamentos: 437</span>
-          <span class="text-emerald-700">Normais: ${437 - activeIssues.length}</span>
+          <span>Total Equipamentos: ${machinesData.length}</span>
+          <span class="text-emerald-700">Normais: ${machinesData.length - activeIssues.length}</span>
           <span class="text-amber-700">Com Pendência: ${activeIssues.length}</span>
           <span class="text-red-700">Críticos (>48h sem ação): ${overdue.length}</span>
         </div>
       `;
 
       if (activeIssues.length === 0) {
-        html += `<p class="text-emerald-700 font-bold">🎉 Nenhuma ocorrência ativa nos 6 clientes de Segunda-Feira!</p>`;
+        html += `<p class="text-emerald-700 font-bold">🎉 Nenhuma ocorrência ativa na frota nacional! Todos os 146 equipamentos operando normalmente.</p>`;
       } else {
-        html += `<h4 class="font-bold text-gray-800 border-b pb-1 mb-2">Clientes em Evidência (${activeIssues.length} ocorrências):</h4><ul class="space-y-2">`;
+        html += `<h4 class="font-bold text-gray-800 border-b pb-1 mb-2">Equipamentos em Evidência (${activeIssues.length} ocorrências):</h4><ul class="space-y-2">`;
         activeIssues.forEach(m => {
           const hAgo = getHoursAgo(m.lastActionAt || m.reportedAt);
           const isCritical = hAgo >= 48;
+          let stageLabel = m.actionStage;
+          if (m.actionStage === 'DESMOBILIZACAO_AGENDADA') stageLabel = '🚚 Desmobilização Agendada';
+
           html += `
             <li class="p-2.5 rounded-lg border ${isCritical ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} text-xs">
               <div class="flex justify-between font-bold">
-                <span>Cliente ${m.clientCode} - ${m.clientName} (Máquina #${String(m.equipNumber).padStart(3, '0')})</span>
-                <span class="${isCritical ? 'text-red-700 font-bold' : 'text-amber-700'}">${m.status} (${hAgo}h sem ação)</span>
+                <span>${m.clientName} (Cod ${m.clientCode} | EQP N° ${m.equipNumber} - ${m.tech})</span>
+                <span class="${isCritical ? 'text-red-700 font-bold' : 'text-purple-700'}">${m.status} (${hAgo}h sem ação)</span>
               </div>
               <p class="text-gray-600 mt-1"><strong>Motivo:</strong> ${m.issue || 'Sem descrição'}</p>
-              <p class="text-gray-500 text-[11px] mt-0.5"><strong>Status Controlador:</strong> ${m.actionStage} - ${m.actionNote || 'Nenhuma nota'}</p>
+              <p class="text-gray-500 text-[11px] mt-0.5"><strong>Status Controlador:</strong> ${stageLabel} - ${m.actionNote || 'Nenhuma nota'}</p>
             </li>
           `;
         });
         html += `</ul>`;
       }
 
-      html += `<p class="text-gray-500 text-[11px] mt-4 border-t pt-2">Mensagem gerada automaticamente pelo Sistema na Nuvem.</p>`;
+      html += `<p class="text-gray-500 text-[11px] mt-4 border-t pt-2">Mensagem gerada automaticamente pelo Sistema de Gestão de Equipamentos.</p>`;
       container.innerHTML = html;
     }
 
     function triggerSimulatedEmail() {
-      alert('📧 Relatório do Técnico Bruno simulado e enviado com sucesso!');
+      alert('📧 Relatório simulado e enviado com sucesso!');
     }
 
     window.addEventListener('DOMContentLoaded', initData);
