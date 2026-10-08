@@ -216,6 +216,7 @@
               <option value="FALTA_PECA">🟡 Falta de Peça</option>
               <option value="MANUTENCAO">🟠 Em Manutenção</option>
               <option value="DESMOBILIZACAO">🚚 Agendada Desmobilização</option>
+              <option value="MOBILIZACAO">🚛 Agendada Mobilização</option>
             </select>
           </div>
         </div>
@@ -307,6 +308,10 @@
               <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-purple-400">
                 <input type="radio" name="mobile-status" value="DESMOBILIZACAO" required class="text-purple-600 focus:ring-purple-500">
                 <span class="text-xs font-medium text-purple-700">🚚 Desmobilização</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-blue-400">
+                <input type="radio" name="mobile-status" value="MOBILIZACAO" required class="text-blue-600 focus:ring-blue-500">
+                <span class="text-xs font-medium text-blue-700">🚛 Mobilização</span>
               </label>
               <label class="flex items-center gap-2 p-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-emerald-400 col-span-2">
                 <input type="radio" name="mobile-status" value="NORMAL" required class="text-emerald-600 focus:ring-emerald-500">
@@ -470,6 +475,7 @@
             <option value="PECA_SOLICITADA">📦 Peça Solicitada ao Fornecedor</option>
             <option value="TECNICO_AGENDADO">👨‍🔧 Manutenção em Andamento</option>
             <option value="DESMOBILIZACAO_AGENDADA">🚚 Agendada a Desmobilização do Equipamento (Retorno à Fábrica)</option>
+            <option value="MOBILIZACAO_AGENDADA">🚛 Agendada a Mobilização do Equipamento (Envio ao Cliente)</option>
             <option value="RESOLVIDO">🟢 PROBLEMA RESOLVIDO (Dar Baixa / Ocultar da Exceção)</option>
           </select>
         </div>
@@ -1247,6 +1253,7 @@
         else if (m.status === 'FALTA_PECA') statusBadge = '<span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-[11px]">🟡 FALTA DE PEÇA</span>';
         else if (m.status === 'MANUTENCAO') statusBadge = '<span class="bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded text-[11px]">🟠 MANUTENÇÃO</span>';
         else if (m.status === 'DESMOBILIZACAO') statusBadge = '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[11px] border border-purple-200">🚚 DESMOBILIZAÇÃO</span>';
+        else if (m.status === 'MOBILIZACAO') statusBadge = '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[11px] border border-blue-200">🚛 MOBILIZAÇÃO</span>';
         else statusBadge = '<span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[11px]">🟢 NORMAL</span>';
 
         let stageText = '';
@@ -1254,6 +1261,7 @@
         else if (m.actionStage === 'PECA_SOLICITADA') stageText = '📦 Peça Solicitada ao Fornecedor';
         else if (m.actionStage === 'TECNICO_AGENDADO') stageText = '👨‍🔧 Manutenção em Andamento';
         else if (m.actionStage === 'DESMOBILIZACAO_AGENDADA') stageText = '🚚 Agendada a Desmobilização (Retorno à Fábrica)';
+        else if (m.actionStage === 'MOBILIZACAO_AGENDADA') stageText = '🚛 Agendada a Mobilização (Envio ao Cliente)';
 
         card.className = `bg-[var(--card)] border ${borderClass} rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3 relative`;
 
@@ -1420,6 +1428,7 @@
       else if (m.status === 'FALTA_PECA') statusBadgeEl.className = 'bg-amber-100 text-amber-800 border border-amber-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
       else if (m.status === 'MANUTENCAO') statusBadgeEl.className = 'bg-orange-100 text-orange-800 border border-orange-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
       else if (m.status === 'DESMOBILIZACAO') statusBadgeEl.className = 'bg-purple-100 text-purple-800 border border-purple-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
+      else if (m.status === 'MOBILIZACAO') statusBadgeEl.className = 'bg-blue-100 text-blue-800 border border-blue-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
       else statusBadgeEl.className = 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2.5 py-0.5 rounded-full text-[10px]';
       statusBadgeEl.textContent = m.status;
 
@@ -1531,6 +1540,7 @@
           const isCritical = hAgo >= 48;
           let stageLabel = m.actionStage;
           if (m.actionStage === 'DESMOBILIZACAO_AGENDADA') stageLabel = '🚚 Desmobilização Agendada';
+          else if (m.actionStage === 'MOBILIZACAO_AGENDADA') stageLabel = '🚛 Mobilização Agendada';
 
           html += `
             <li class="p-2.5 rounded-lg border ${isCritical ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} text-xs">
