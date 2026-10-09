@@ -14,7 +14,7 @@
 <body class="bg-[var(--background)] text-[var(--foreground)] antialiased font-sans min-h-screen">
 
   <!-- TOP HEADER & CONTROLS -->
-  <header class="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-30 shadow-sm">
+  <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-md">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
@@ -48,6 +48,11 @@
           class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
           <span>✉️</span>
           <span>Alertas & Resumo</span>
+        </button>
+        <button id="btn-view-history" onclick="switchView('history')" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          <span>📜</span>
+          <span>Histórico & Auditoria</span>
         </button>
         <button id="btn-view-users" onclick="switchView('users')" 
           class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
@@ -430,6 +435,70 @@
 
     </section>
 
+    <!-- ========================================================================= -->
+    <!-- VIEW 5: HISTÓRICO & AUDITORIA DE ALTERAÇÕES                              -->
+    <!-- ========================================================================= -->
+    <section id="view-history" class="hidden space-y-6 max-w-5xl mx-auto">
+      
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-[var(--foreground)]">📜 Histórico de Alterações & Auditoria do Sistema</h2>
+              <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-blue-300">Tempo Real</span>
+            </div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-0.5">Registro auditável de aberturas, atualizações, baixas, gestão de usuários e exclusões de ocorrências com justificativas.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="exportHistoryCSV()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+              <span>📊</span> Exportar CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- FILTERS FOR HISTORY -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Tipo de Ação:</label>
+            <select id="history-filter-action" onchange="renderHistoryView()" 
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todas as Ações</option>
+              <option value="NOVA_OCORRENCIA">🚨 Nova Ocorrência</option>
+              <option value="ATUALIZACAO_CONTROLADOR">✏️ Atualização do Controlador</option>
+              <option value="EXCLUSAO">🗑️ Exclusão de Ocorrência</option>
+              <option value="BAIXA">🟢 Baixa / Problema Resolvido</option>
+              <option value="GESTAO_USUARIO">👤 Gestão de Usuário</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Conta / Usuário:</label>
+            <select id="history-filter-user" onchange="renderHistoryView()" 
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todas as Contas</option>
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Buscar no Histórico:</label>
+            <input type="text" id="history-search-input" placeholder="Buscar por cliente, motivo, usuário..." 
+              oninput="renderHistoryView()"
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY LOGS CONTAINER -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
+        <div id="history-logs-container" class="divide-y divide-[var(--border)]">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
   <!-- MODAL FOR CONTROLLER (ALTA VISIBILIDADE E CONTRASTE) -->
@@ -792,7 +861,50 @@
     let usersData = [];
     let currentUser = null;
     let machinesData = [];
+    let historyLogs = [];
     let lastKnownIssueCount = 0;
+
+    const INITIAL_HISTORY = [
+      {
+        id: 'hist-1',
+        action: 'NOVA_OCORRENCIA',
+        author: 'Técnico Cauê',
+        equipId: 'EQP-42-6',
+        clientName: '03-EURO-ITP',
+        equipNumber: '6',
+        clientCode: '42',
+        details: '🚨 Nova ocorrência registrada com status "MANUTENCAO". Motivo/Observação: "Manutenção ocorrera no dia 09/10/2026, alinhado com o Leandro e o Cauê"',
+        timestamp: new Date(Date.now() - 3600000 * 24).toISOString()
+      },
+      {
+        id: 'hist-2',
+        action: 'NOVA_OCORRENCIA',
+        author: 'Técnico Anderson',
+        equipId: 'EQP-411-92',
+        clientName: 'Pepsico',
+        equipNumber: '92',
+        clientCode: '411',
+        details: '🚨 Nova ocorrência registrada com status "DESMOBILIZACAO". Motivo/Observação: "Equipamento será desmobilizado no dia 13/10/2026."',
+        timestamp: new Date(Date.now() - 3600000 * 12).toISOString()
+      }
+    ];
+
+    function addHistoryLog(entry) {
+      const log = {
+        id: 'hist-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+        action: entry.action || 'ATUALIZACAO',
+        author: entry.author || (currentUser ? currentUser.name : 'Sistema'),
+        equipId: entry.equipId || '',
+        clientName: entry.clientName || '',
+        equipNumber: entry.equipNumber || '',
+        clientCode: entry.clientCode || '',
+        details: entry.details || '',
+        timestamp: entry.timestamp || new Date().toISOString()
+      };
+      historyLogs.unshift(log);
+      if (historyLogs.length > 250) historyLogs.pop();
+      localStorage.setItem('fleet_v9_history', JSON.stringify(historyLogs));
+    }
 
     const syncChannel = new BroadcastChannel('fleet_sync_channel');
     syncChannel.onmessage = (event) => {
@@ -966,11 +1078,20 @@
         machinesData = generateDataset();
       }
 
+      const storedHist = localStorage.getItem('fleet_v9_history');
+      if (storedHist) {
+        try { historyLogs = JSON.parse(storedHist); } catch(e) { historyLogs = [...INITIAL_HISTORY]; }
+      } else {
+        historyLogs = [...INITIAL_HISTORY];
+      }
+
       populateClientFilterOptions();
       renderTechBreakdown();
       renderControllerView();
       renderEmailPreview();
       renderUsersTable();
+      populateHistoryUserFilter();
+      renderHistoryView();
 
       await fetchCloudData();
       setInterval(fetchCloudData, 3000);
@@ -1026,7 +1147,8 @@
           name: 'gestao_br_fleet_v9',
           data: {
             occurrences: occurrences,
-            users: usersData
+            users: usersData,
+            history: historyLogs
           }
         };
         const response = await fetch(CLOUD_DB_URL, {
@@ -1063,6 +1185,17 @@
             if (currentUser) {
               const fresh = usersData.find(u => u.id === currentUser.id);
               if (fresh) { currentUser = fresh; updateUserHeaderBadge(); }
+            }
+          }
+
+          if (result && result.data && Array.isArray(result.data.history) && result.data.history.length > 0) {
+            const newHistJson = JSON.stringify(result.data.history);
+            const oldHistJson = JSON.stringify(historyLogs);
+            if (newHistJson !== oldHistJson) {
+              historyLogs = result.data.history;
+              localStorage.setItem('fleet_v9_history', newHistJson);
+              populateHistoryUserFilter();
+              renderHistoryView();
             }
           }
           
@@ -1135,11 +1268,13 @@
       document.getElementById('view-controller').classList.add('hidden');
       document.getElementById('view-mobile').classList.add('hidden');
       document.getElementById('view-email').classList.add('hidden');
+      document.getElementById('view-history').classList.add('hidden');
       document.getElementById('view-users').classList.add('hidden');
 
       document.getElementById('btn-view-controller').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
       document.getElementById('btn-view-mobile').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
       document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+      document.getElementById('btn-view-history').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
       document.getElementById('btn-view-users').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
 
       if (viewName === 'controller') {
@@ -1153,6 +1288,11 @@
         document.getElementById('view-email').classList.remove('hidden');
         document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
         renderEmailPreview();
+      } else if (viewName === 'history') {
+        document.getElementById('view-history').classList.remove('hidden');
+        document.getElementById('btn-view-history').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        populateHistoryUserFilter();
+        renderHistoryView();
       } else if (viewName === 'users') {
         if (!currentUser || currentUser.role !== 'MASTER') {
           alert('🔒 Acesso exclusivo do Controlador Master.');
@@ -1383,13 +1523,32 @@
       const target = machinesData.find(m => m.id === equipId);
       if (target) {
         target.status = status;
+        const authorName = techName;
         if (status === 'NORMAL') {
+          addHistoryLog({
+            action: 'BAIXA',
+            author: authorName,
+            equipId: target.id,
+            clientName: target.clientName,
+            equipNumber: target.equipNumber,
+            clientCode: target.clientCode,
+            details: `🟢 Baixa/Regularização enviada via Campo por ${authorName}. Equipamento sem problemas.`
+          });
           target.issue = null;
           target.reporter = null;
           target.reportedAt = null;
           target.actionStage = 'REGISTRADO';
           target.actionNote = '';
         } else {
+          addHistoryLog({
+            action: 'NOVA_OCORRENCIA',
+            author: authorName,
+            equipId: target.id,
+            clientName: target.clientName,
+            equipNumber: target.equipNumber,
+            clientCode: target.clientCode,
+            details: `🚨 Nova ocorrência reportada pelo campo (${authorName}) com status "${status}". Observação: "${notes || 'Sem observação'}"`
+          });
           target.issue = notes;
           target.reporter = techName;
           target.reportedAt = target.reportedAt || new Date().toISOString();
@@ -1400,6 +1559,7 @@
         }
 
         await pushCloudData();
+        renderHistoryView();
 
         btn.disabled = false;
         btn.innerHTML = `📲 Sincronizar na Nuvem & Notificar Controlador`;
@@ -1461,12 +1621,26 @@
       const newNote = document.getElementById('modal-action-note').value;
       const authorName = currentUser ? currentUser.name : 'Controlador Master';
 
+      const isBaixa = (newStage === 'RESOLVIDO');
+
+      addHistoryLog({
+        action: isBaixa ? 'BAIXA' : 'ATUALIZACAO_CONTROLADOR',
+        author: authorName,
+        equipId: m.id,
+        clientName: m.clientName,
+        equipNumber: m.equipNumber,
+        clientCode: m.clientCode,
+        details: isBaixa 
+          ? `🟢 Ocorrência FINALIZADA / DADA BAIXA pelo controlador ${authorName}. Nota: "${newNote || 'Equipamento regularizado'}"`
+          : `✏️ Atualização de acompanhamento pelo controlador ${authorName}: Etapa -> "${newStage}". Nota: "${newNote || 'Sem nota'}"`
+      });
+
       m.actionStage = newStage;
       m.actionNote = newNote;
       m.lastActionAt = new Date().toISOString();
       m.lastUpdatedBy = authorName;
 
-      if (newStage === 'RESOLVIDO') {
+      if (isBaixa) {
         m.status = 'NORMAL';
         m.issue = null;
         m.reporter = null;
@@ -1480,6 +1654,7 @@
       closeModal();
       renderControllerView();
       renderEmailPreview();
+      renderHistoryView();
     }
 
     const MASTER_DELETE_PASSWORD = '123456';
@@ -1492,29 +1667,51 @@
 
       if (inputPass === null) return;
 
-      if (inputPass.trim() === MASTER_DELETE_PASSWORD) {
-        target.status = 'NORMAL';
-        target.issue = null;
-        target.reporter = null;
-        target.reportedAt = null;
-        target.actionStage = 'REGISTRADO';
-        target.actionNote = '';
-        target.lastActionAt = null;
-
-        await pushCloudData();
-
-        if (currentEditingId === id) {
-          closeModal();
-        }
-
-        renderControllerView();
-        renderEmailPreview();
-
-        showRealtimeToast('🗑️ Ocorrência excluída com sucesso da nuvem!');
-        alert('✅ Ocorrência excluída com sucesso! O equipamento retornou ao status Normal.');
-      } else {
+      if (inputPass.trim() !== MASTER_DELETE_PASSWORD) {
         alert('❌ Senha Master incorreta! A exclusão foi cancelada.');
+        return;
       }
+
+      const reason = prompt(`📝 JUSTIFICATIVA OBRIGATÓRIA DE EXCLUSÃO\n\nEquipamento: ${target.clientName} (EQP N° ${target.equipNumber})\n\nPor favor, descreva o motivo/justificativa para excluir esta ocorrência:`);
+
+      if (!reason || !reason.trim()) {
+        alert('⚠️ É obrigatório fornecer uma justificativa para excluir uma ocorrência.');
+        return;
+      }
+
+      const authorName = currentUser ? currentUser.name : 'Controlador Master';
+
+      addHistoryLog({
+        action: 'EXCLUSAO',
+        author: authorName,
+        equipId: target.id,
+        clientName: target.clientName,
+        equipNumber: target.equipNumber,
+        clientCode: target.clientCode,
+        details: `🗑️ Ocorrência EXCLUÍDA por ${authorName}. Motivo/Justificativa: "${reason.trim()}". (Ocorrência anterior: ${target.status} - "${target.issue || 'Sem descrição'}")`
+      });
+
+      target.status = 'NORMAL';
+      target.issue = null;
+      target.reporter = null;
+      target.reportedAt = null;
+      target.actionStage = 'REGISTRADO';
+      target.actionNote = '';
+      target.lastActionAt = null;
+      target.lastUpdatedBy = null;
+
+      await pushCloudData();
+
+      if (currentEditingId === id) {
+        closeModal();
+      }
+
+      renderControllerView();
+      renderEmailPreview();
+      renderHistoryView();
+
+      showRealtimeToast('🗑️ Ocorrência excluída e registrada no Histórico!');
+      alert('✅ Ocorrência excluída com sucesso! Justificativa registrada no Histórico de Auditoria.');
     }
 
     function promptDeleteOccurrenceFromModal() {
@@ -1654,6 +1851,8 @@
         return;
       }
 
+      const authorName = currentUser ? currentUser.name : 'Controlador Master';
+
       if (id) {
         const u = usersData.find(x => x.id === id);
         if (u) {
@@ -1662,6 +1861,11 @@
           u.pass = pass;
           u.role = role;
           u.allowedTech = allowedTech;
+          addHistoryLog({
+            action: 'GESTAO_USUARIO',
+            author: authorName,
+            details: `👤 Usuário "${name}" (${username}) editado no sistema por ${authorName}.`
+          });
         }
       } else {
         const existing = usersData.find(x => x.username === username);
@@ -1677,12 +1881,18 @@
           role,
           allowedTech
         });
+        addHistoryLog({
+          action: 'GESTAO_USUARIO',
+          author: authorName,
+          details: `👤 Novo usuário "${name}" (${username} - Função: ${role}) cadastrado por ${authorName}.`
+        });
       }
 
       await saveUsersData();
       closeUserModal();
       renderUsersTable();
       populateLoginUserDropdown();
+      renderHistoryView();
       alert('✅ Usuário salvo e sincronizado na nuvem com sucesso!');
     }
 
@@ -1696,10 +1906,17 @@
       }
 
       if (confirm(`Tem certeza que deseja excluir o usuário "${u.name}" (${u.username})?`)) {
+        const authorName = currentUser ? currentUser.name : 'Controlador Master';
+        addHistoryLog({
+          action: 'GESTAO_USUARIO',
+          author: authorName,
+          details: `👤 Usuário "${u.name}" (${u.username}) EXCLUÍDO do sistema por ${authorName}.`
+        });
         usersData = usersData.filter(x => x.id !== id);
         await saveUsersData();
         renderUsersTable();
         populateLoginUserDropdown();
+        renderHistoryView();
         alert('✅ Usuário excluído com sucesso.');
       }
     }
@@ -1707,6 +1924,125 @@
     async function saveUsersData() {
       localStorage.setItem('fleet_v9_users', JSON.stringify(usersData));
       await pushCloudData();
+    }
+
+    // HISTORY & AUDIT LOG RENDER & EXPORT
+    function populateHistoryUserFilter() {
+      const select = document.getElementById('history-filter-user');
+      if (!select) return;
+      
+      const currentVal = select.value || 'all';
+      select.innerHTML = '<option value="all">Todas as Contas / Usuários</option>';
+      
+      const authors = new Set();
+      historyLogs.forEach(log => {
+        if (log.author) authors.add(log.author);
+      });
+      usersData.forEach(u => {
+        if (u.name) authors.add(u.name);
+      });
+
+      authors.forEach(auth => {
+        const opt = document.createElement('option');
+        opt.value = auth;
+        opt.textContent = auth;
+        select.appendChild(opt);
+      });
+
+      select.value = currentVal;
+    }
+
+    function renderHistoryView() {
+      const container = document.getElementById('history-logs-container');
+      if (!container) return;
+
+      const actionFilter = document.getElementById('history-filter-action')?.value || 'all';
+      const userFilter = document.getElementById('history-filter-user')?.value || 'all';
+      const searchFilter = (document.getElementById('history-search-input')?.value || '').toLowerCase();
+
+      container.innerHTML = '';
+
+      const filtered = historyLogs.filter(log => {
+        if (actionFilter !== 'all' && log.action !== actionFilter) return false;
+        if (userFilter !== 'all' && log.author !== userFilter) return false;
+        if (searchFilter) {
+          const matchStr = `${log.clientName} ${log.equipNumber} ${log.clientCode} ${log.author} ${log.details} ${log.action}`.toLowerCase();
+          if (!matchStr.includes(searchFilter)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-gray-500 space-y-2">
+            <span class="text-3xl block">🔍</span>
+            <p class="font-bold text-sm">Nenhum registro encontrado no histórico com esses filtros.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(log => {
+        const div = document.createElement('div');
+        div.className = 'p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+
+        let badgeHtml = '';
+        if (log.action === 'NOVA_OCORRENCIA') {
+          badgeHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">🚨 NOVA OCORRÊNCIA</span>';
+        } else if (log.action === 'ATUALIZACAO_CONTROLADOR') {
+          badgeHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-300">✏️ ATUALIZAÇÃO</span>';
+        } else if (log.action === 'EXCLUSAO') {
+          badgeHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-100 text-red-800 border border-red-300">🗑️ EXCLUSÃO</span>';
+        } else if (log.action === 'BAIXA') {
+          badgeHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 BAIXA / CONCLUÍDO</span>';
+        } else if (log.action === 'GESTAO_USUARIO') {
+          badgeHtml = '<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300">👤 GESTÃO USUÁRIO</span>';
+        } else {
+          badgeHtml = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-gray-100 text-gray-800 border border-gray-300">${log.action}</span>`;
+        }
+
+        const dateFormatted = formatDateTime(log.timestamp);
+
+        div.innerHTML = `
+          <div class="space-y-1 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              ${badgeHtml}
+              ${log.equipNumber ? `<span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded font-mono">EQP N° ${log.equipNumber}</span>` : ''}
+              ${log.clientName ? `<span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">${log.clientName} (Cod ${log.clientCode})</span>` : ''}
+            </div>
+            <p class="text-xs text-[var(--foreground)] font-medium leading-relaxed mt-1">${log.details}</p>
+          </div>
+          <div class="text-right sm:text-right shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
+            <div class="text-xs font-bold text-blue-700 dark:text-blue-400">👤 ${log.author}</div>
+            <div class="text-[10px] font-mono text-[var(--muted-foreground)]">🕒 ${dateFormatted}</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function exportHistoryCSV() {
+      if (!historyLogs || historyLogs.length === 0) {
+        alert('Não há registros de histórico para exportar.');
+        return;
+      }
+
+      let csv = 'ID;Data/Hora;Ação;Usuário/Autor;Cliente;Cod Cliente;EQP N;Detalhes / Justificativa\n';
+      historyLogs.forEach(log => {
+        const dt = formatDateTime(log.timestamp);
+        const detailsClean = (log.details || '').replace(/;/g, ',').replace(/\n/g, ' ');
+        const clientClean = (log.clientName || '').replace(/;/g, ',');
+        csv += `"${log.id}";"${dt}";"${log.action}";"${log.author}";"${clientClean}";"${log.clientCode}";"${log.equipNumber}";"${detailsClean}"\n`;
+      });
+
+      const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `historico_gestao_equipamentos_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     window.addEventListener('DOMContentLoaded', initData);

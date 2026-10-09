@@ -13,6 +13,8 @@ let globalUsers = [
   { id: 'usr-bruno', name: 'Técnico Bruno', username: 'bruno', pass: 'bruno123', role: 'TECH', allowedTech: 'Técnico Bruno' }
 ];
 
+let globalHistory = [];
+
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -33,9 +35,11 @@ exports.handler = async (event, context) => {
       } else if (data && data.data) {
         if (Array.isArray(data.data.occurrences)) globalOccurrences = data.data.occurrences;
         if (Array.isArray(data.data.users)) globalUsers = data.data.users;
+        if (Array.isArray(data.data.history)) globalHistory = data.data.history;
       } else if (data) {
         if (Array.isArray(data.occurrences)) globalOccurrences = data.occurrences;
         if (Array.isArray(data.users)) globalUsers = data.users;
+        if (Array.isArray(data.history)) globalHistory = data.history;
       }
 
       // Persist to cloud storage so data survives serverless cold restarts
@@ -44,7 +48,8 @@ exports.handler = async (event, context) => {
           name: "gestao_br_fleet_v10_prod",
           data: {
             occurrences: globalOccurrences,
-            users: globalUsers
+            users: globalUsers,
+            history: globalHistory
           }
         };
         await fetch(PERSISTENT_URL, {
@@ -59,7 +64,7 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, occurrencesCount: globalOccurrences.length, usersCount: globalUsers.length, updatedAt: new Date().toISOString() })
+        body: JSON.stringify({ success: true, occurrencesCount: globalOccurrences.length, usersCount: globalUsers.length, historyCount: globalHistory.length, updatedAt: new Date().toISOString() })
       };
     } catch (err) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: err.message }) };
@@ -74,6 +79,7 @@ exports.handler = async (event, context) => {
       if (cloudObj && cloudObj.data) {
         if (Array.isArray(cloudObj.data.occurrences)) globalOccurrences = cloudObj.data.occurrences;
         if (Array.isArray(cloudObj.data.users) && cloudObj.data.users.length > 0) globalUsers = cloudObj.data.users;
+        if (Array.isArray(cloudObj.data.history)) globalHistory = cloudObj.data.history;
       }
     }
   } catch(e) {
@@ -83,6 +89,6 @@ exports.handler = async (event, context) => {
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ data: { occurrences: globalOccurrences, users: globalUsers } })
+    body: JSON.stringify({ data: { occurrences: globalOccurrences, users: globalUsers, history: globalHistory } })
   };
 };
