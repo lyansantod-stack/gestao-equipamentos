@@ -1,3 +1,5 @@
+const PERSISTENT_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a120cc1ed32dde';
+
 let globalOccurrences = [
   {
     id: "EQP-42-6",
@@ -58,6 +60,25 @@ exports.handler = async (event, context) => {
         if (Array.isArray(data.occurrences)) globalOccurrences = data.occurrences;
         if (Array.isArray(data.users)) globalUsers = data.users;
       }
+
+      // Persist to cloud storage so data survives serverless cold restarts
+      try {
+        const payload = {
+          name: "gestao_br_fleet_v9",
+          data: {
+            occurrences: globalOccurrences,
+            users: globalUsers
+          }
+        };
+        await fetch(PERSISTENT_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch(e) {
+        console.warn('Persistent cloud store PUT warning:', e);
+      }
+
       return {
         statusCode: 200,
         headers,
@@ -69,6 +90,19 @@ exports.handler = async (event, context) => {
   }
 
   // GET
+  try {
+    const res = await fetch(PERSISTENT_URL);
+    if (res.ok) {
+      const cloudObj = await res.json();
+      if (cloudObj && cloudObj.data) {
+        if (Array.isArray(cloudObj.data.occurrences)) globalOccurrences = cloudObj.data.occurrences;
+        if (Array.isArray(cloudObj.data.users) && cloudObj.data.users.length > 0) globalUsers = cloudObj.data.users;
+      }
+    }
+  } catch(e) {
+    console.warn('Persistent cloud store GET warning:', e);
+  }
+
   return {
     statusCode: 200,
     headers,
