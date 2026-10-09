@@ -14,69 +14,80 @@
 <body class="bg-[var(--background)] text-[var(--foreground)] antialiased font-sans min-h-screen">
 
   <!-- TOP HEADER & CONTROLS -->
-  <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+  <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3 py-2 flex flex-col md:flex-row items-center justify-between gap-2.5">
+      
+      <!-- LEFT: LOGO, TITLE & BADGES -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-base shadow-sm shrink-0">
           ⚙️
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-base font-bold text-[var(--foreground)] leading-tight">Gestão de Equipamentos Brasil</h1>
-            <span id="cloud-sync-badge" class="inline-flex items-center gap-1 text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-full">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 badge-pulse"></span>
+            <h1 class="text-sm font-bold text-[var(--foreground)] leading-none">Gestão de Equipamentos Brasil</h1>
+            <span id="cloud-sync-badge" class="inline-flex items-center gap-1 text-[9px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-1.5 py-0.5 rounded-full">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 badge-pulse"></span>
               <span>Nuvem Sincronizada</span>
             </span>
           </div>
-          <p class="text-xs text-[var(--muted-foreground)]"><span id="header-total-count">146</span> Equipamentos Cadastrados • 7 Técnicos • Base Limpa</p>
+          <p class="text-[10px] text-[var(--muted-foreground)] mt-0.5"><span id="header-total-count">146</span> Equipamentos Cadastrados • 7 Técnicos • Base Limpa</p>
         </div>
       </div>
 
-      <!-- VIEW MODE SWITCHER -->
-      <div class="flex items-center bg-[var(--background)] p-1 rounded-xl border border-[var(--border)] flex-wrap gap-1">
-        <button id="btn-view-controller" onclick="switchView('controller')" 
-          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm">
-          <span>💻</span>
-          <span>Painel do Controlador</span>
-        </button>
-        <button id="btn-view-mobile" onclick="switchView('mobile')" 
-          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          <span>📱</span>
-          <span>Visão do Campo (Celular)</span>
-        </button>
-        <button id="btn-view-email" onclick="switchView('email')" 
-          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          <span>✉️</span>
-          <span>Alertas & Resumo</span>
-        </button>
-        <button id="btn-view-history" onclick="switchView('history')" 
-          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          <span>📜</span>
-          <span>Histórico & Auditoria</span>
-        </button>
-        <button id="btn-view-users" onclick="switchView('users')" 
-          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-          <span>👥</span>
-          <span>Gestão de Usuários</span>
-        </button>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <div id="user-logged-badge" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm">
-          <span id="user-avatar-icon">👤</span>
-          <span id="user-logged-name">Carregando...</span>
-          <button onclick="logoutUser()" title="Sair da Conta" class="ml-1 text-red-600 hover:text-red-800 font-bold hover:bg-red-100 px-1.5 py-0.5 rounded text-[10px]">
-            🚪 Sair
+      <!-- RIGHT: VIEW SWITCHER TABS & USER CONTROLS -->
+      <div class="flex items-center gap-2 flex-wrap justify-center md:justify-end">
+        
+        <!-- VIEW MODE SWITCHER TABS -->
+        <div class="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 flex-wrap gap-0.5">
+          <button id="btn-view-controller" onclick="switchView('controller')" 
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold smooth-transition bg-blue-600 text-white shadow-sm">
+            <span>💻</span>
+            <span>Painel</span>
+          </button>
+          <button id="btn-view-mobile" onclick="switchView('mobile')" 
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900">
+            <span>📱</span>
+            <span>Campo (Celular)</span>
+          </button>
+          <button id="btn-view-email" onclick="switchView('email')" 
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900">
+            <span>✉️</span>
+            <span>Alertas</span>
+          </button>
+          <button id="btn-view-history" onclick="switchView('history')" 
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900">
+            <span>📜</span>
+            <span>Histórico</span>
+          </button>
+          <button id="btn-view-users" onclick="switchView('users')" 
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900">
+            <span>👥</span>
+            <span>Usuários</span>
           </button>
         </div>
-        <button onclick="forceCloudSync()" title="Forçar sincronização com a nuvem" 
-          class="text-xs px-2.5 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold flex items-center gap-1">
-          <span>☁️</span> Sincronizar
-        </button>
-        <button onclick="resetData()" title="Limpar e resetar banco" 
-          class="text-xs px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--background)] text-[var(--muted-foreground)] flex items-center gap-1">
-          <span>🔄</span> Resetar Base Limpa
-        </button>
+
+        <!-- USER BADGE & ACTION BUTTONS -->
+        <div class="flex items-center gap-1.5">
+          <div id="user-logged-badge" class="flex items-center gap-1 px-2.5 py-1 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-slate-700 rounded-lg text-[11px] font-bold shadow-2xs">
+            <span id="user-avatar-icon">👤</span>
+            <span id="user-logged-name">Carregando...</span>
+            <button onclick="logoutUser()" title="Sair da Conta" class="ml-1 text-red-600 hover:text-red-800 font-bold hover:bg-red-100 px-1 rounded text-[9px]">
+              🚪 Sair
+            </button>
+          </div>
+
+          <button onclick="forceCloudSync()" title="Forçar sincronização com a nuvem" 
+            class="text-[11px] px-2 py-1 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold flex items-center gap-1">
+            <span>☁️</span> Sincronizar
+          </button>
+
+          <!-- DISCRETE RESET BUTTON (SENHA MASTER OBRIGATÓRIA) -->
+          <button id="btn-reset-data" onclick="resetData()" title="Resetar Base Limpa (Exige Senha Master)" 
+            class="text-[10px] px-1.5 py-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 border border-transparent hover:border-red-200 font-medium">
+            <span>🔄</span> <span class="hidden sm:inline">Resetar</span>
+          </button>
+        </div>
+
       </div>
     </div>
   </header>
@@ -1050,21 +1061,25 @@
 
     function applyUserPermissions() {
       const btnUsers = document.getElementById('btn-view-users');
+      const btnReset = document.getElementById('btn-reset-data');
       const techSelect = document.getElementById('mobile-tech-select');
 
       if (!currentUser) {
         if (btnUsers) btnUsers.classList.add('hidden');
+        if (btnReset) btnReset.classList.add('hidden');
         return;
       }
 
       if (currentUser.role === 'TECH') {
         if (btnUsers) btnUsers.classList.add('hidden');
+        if (btnReset) btnReset.classList.add('hidden');
         if (techSelect && currentUser.allowedTech !== 'all') {
           techSelect.value = currentUser.allowedTech;
           onMobileTechChange();
         }
       } else {
         if (btnUsers) btnUsers.classList.remove('hidden');
+        if (btnReset) btnReset.classList.remove('hidden');
       }
     }
 
@@ -1256,11 +1271,27 @@
     }
 
     async function resetData() {
-      if (confirm('Deseja resetar a base da nuvem e restaurar os 146 equipamentos com status limpo (Normal)?')) {
+      const pass = prompt('🔒 RESTRITO AO CONTROLADOR MASTER\n\nPor favor, informe a SENHA MASTER (123456) para autorizar o reset da base de dados:');
+      if (pass === null) return;
+
+      if (pass.trim() !== '123456') {
+        alert('❌ Senha Master incorreta! O reset foi cancelado.');
+        return;
+      }
+
+      if (confirm('⚠️ TEM CERTEZA ABSOLUTA?\n\nEsta ação limpará todas as ocorrências ativas da nuvem e restaurará os 146 equipamentos com status Limpo (Normal).')) {
+        const authorName = currentUser ? currentUser.name : 'Controlador Master';
         machinesData = generateDataset();
+        addHistoryLog({
+          action: 'GESTAO_USUARIO',
+          author: authorName,
+          details: `🔄 BASE DE DADOS RESETADA por ${authorName}. Todos os 146 equipamentos retornaram ao status Limpo (Normal).`
+        });
         await pushCloudData();
         renderControllerView();
         renderEmailPreview();
+        renderHistoryView();
+        alert('✅ Base de dados resetada com sucesso com autorização Master!');
       }
     }
 
@@ -1271,26 +1302,29 @@
       document.getElementById('view-history').classList.add('hidden');
       document.getElementById('view-users').classList.add('hidden');
 
-      document.getElementById('btn-view-controller').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
-      document.getElementById('btn-view-mobile').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
-      document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
-      document.getElementById('btn-view-history').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
-      document.getElementById('btn-view-users').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition text-[var(--muted-foreground)] hover:text-[var(--foreground)]';
+      const inactiveClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900';
+      const activeClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold smooth-transition bg-blue-600 text-white shadow-sm';
+
+      document.getElementById('btn-view-controller').className = inactiveClass;
+      document.getElementById('btn-view-mobile').className = inactiveClass;
+      document.getElementById('btn-view-email').className = inactiveClass;
+      document.getElementById('btn-view-history').className = inactiveClass;
+      document.getElementById('btn-view-users').className = inactiveClass;
 
       if (viewName === 'controller') {
         document.getElementById('view-controller').classList.remove('hidden');
-        document.getElementById('btn-view-controller').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        document.getElementById('btn-view-controller').className = activeClass;
         renderControllerView();
       } else if (viewName === 'mobile') {
         document.getElementById('view-mobile').classList.remove('hidden');
-        document.getElementById('btn-view-mobile').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        document.getElementById('btn-view-mobile').className = activeClass;
       } else if (viewName === 'email') {
         document.getElementById('view-email').classList.remove('hidden');
-        document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        document.getElementById('btn-view-email').className = activeClass;
         renderEmailPreview();
       } else if (viewName === 'history') {
         document.getElementById('view-history').classList.remove('hidden');
-        document.getElementById('btn-view-history').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        document.getElementById('btn-view-history').className = activeClass;
         populateHistoryUserFilter();
         renderHistoryView();
       } else if (viewName === 'users') {
@@ -1300,7 +1334,7 @@
           return;
         }
         document.getElementById('view-users').classList.remove('hidden');
-        document.getElementById('btn-view-users').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
+        document.getElementById('btn-view-users').className = activeClass;
         renderUsersTable();
       }
     }
