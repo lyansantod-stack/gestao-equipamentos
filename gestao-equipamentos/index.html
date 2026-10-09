@@ -545,7 +545,7 @@
       </form>
       
       <div class="pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-[11px] text-slate-500">
-        💡 <strong>Senhas Padrão:</strong> Master: <code class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-mono font-bold">123456</code> | Técnicos: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-gray-700 font-mono font-bold">nome123</code>
+        🔒 <strong>Acesso Seguro:</strong> Cada usuário possui sua senha individual. Caso precise alterar sua senha, solicite ao Controlador Master.
       </div>
     </div>
   </div>
@@ -896,23 +896,33 @@
     function populateLoginUserDropdown() {
       const select = document.getElementById('login-user-select');
       if (!select) return;
-      select.innerHTML = '';
+      select.innerHTML = '<option value="">-- Selecione o seu Usuário / Técnico --</option>';
       usersData.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
         opt.textContent = `${u.role === 'MASTER' ? '👑' : '👨‍🔧'} ${u.name} (${u.username})`;
         select.appendChild(opt);
       });
+      if (currentUser) {
+        select.value = currentUser.id;
+      } else {
+        select.value = '';
+      }
     }
 
     function handleLoginSubmit(e) {
       e.preventDefault();
       const userId = document.getElementById('login-user-select').value;
-      const pass = document.getElementById('login-password-input').value;
+      const pass = document.getElementById('login-password-input').value.trim();
       const errEl = document.getElementById('login-error-msg');
 
+      if (!userId) {
+        alert('Por favor, selecione o seu usuário na lista.');
+        return;
+      }
+
       const u = usersData.find(x => x.id === userId);
-      if (u && u.pass === pass) {
+      if (u && u.pass.trim() === pass) {
         currentUser = u;
         localStorage.setItem('fleet_v9_current_user', JSON.stringify(u));
         errEl.classList.add('hidden');
@@ -928,8 +938,13 @@
     function logoutUser() {
       currentUser = null;
       localStorage.removeItem('fleet_v9_current_user');
+      document.getElementById('login-password-input').value = '';
+      document.getElementById('login-user-select').value = '';
+      document.getElementById('login-error-msg').classList.add('hidden');
       document.getElementById('login-modal').classList.remove('hidden');
       populateLoginUserDropdown();
+      updateUserHeaderBadge();
+      applyUserPermissions();
     }
 
     function updateUserHeaderBadge() {
@@ -945,14 +960,22 @@
     }
 
     function applyUserPermissions() {
-      if (!currentUser) return;
-
+      const btnUsers = document.getElementById('btn-view-users');
       const techSelect = document.getElementById('mobile-tech-select');
-      if (currentUser.role === 'TECH' && currentUser.allowedTech !== 'all') {
-        if (techSelect) {
+
+      if (!currentUser) {
+        if (btnUsers) btnUsers.classList.add('hidden');
+        return;
+      }
+
+      if (currentUser.role === 'TECH') {
+        if (btnUsers) btnUsers.classList.add('hidden');
+        if (techSelect && currentUser.allowedTech !== 'all') {
           techSelect.value = currentUser.allowedTech;
           onMobileTechChange();
         }
+      } else {
+        if (btnUsers) btnUsers.classList.remove('hidden');
       }
     }
 
@@ -1150,6 +1173,11 @@
         document.getElementById('btn-view-email').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
         renderEmailPreview();
       } else if (viewName === 'users') {
+        if (!currentUser || currentUser.role !== 'MASTER') {
+          alert('🔒 Acesso exclusivo do Controlador Master.');
+          switchView('controller');
+          return;
+        }
         document.getElementById('view-users').classList.remove('hidden');
         document.getElementById('btn-view-users').className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold smooth-transition bg-blue-600 text-white shadow-sm';
         renderUsersTable();
