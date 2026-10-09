@@ -896,6 +896,15 @@
     function populateLoginUserDropdown() {
       const select = document.getElementById('login-user-select');
       if (!select) return;
+
+      const existingSelection = select.value;
+      const currentCount = select.options ? select.options.length : 0;
+
+      if (currentCount === usersData.length + 1 && existingSelection) {
+        select.value = existingSelection;
+        return;
+      }
+
       select.innerHTML = '<option value="">-- Selecione o seu Usuário / Técnico --</option>';
       usersData.forEach(u => {
         const opt = document.createElement('option');
@@ -903,7 +912,10 @@
         opt.textContent = `${u.role === 'MASTER' ? '👑' : '👨‍🔧'} ${u.name} (${u.username})`;
         select.appendChild(opt);
       });
-      if (currentUser) {
+
+      if (existingSelection) {
+        select.value = existingSelection;
+      } else if (currentUser) {
         select.value = currentUser.id;
       } else {
         select.value = '';
@@ -1075,10 +1087,14 @@
           const result = await response.json();
           const cloudOccurrences = (result && result.data && Array.isArray(result.data.occurrences)) ? result.data.occurrences : [];
           if (result && result.data && Array.isArray(result.data.users) && result.data.users.length > 0) {
-            usersData = result.data.users;
-            localStorage.setItem('fleet_v9_users', JSON.stringify(usersData));
-            renderUsersTable();
-            populateLoginUserDropdown();
+            const newUsersJson = JSON.stringify(result.data.users);
+            const oldUsersJson = JSON.stringify(usersData);
+            if (newUsersJson !== oldUsersJson) {
+              usersData = result.data.users;
+              localStorage.setItem('fleet_v9_users', newUsersJson);
+              renderUsersTable();
+              populateLoginUserDropdown();
+            }
             if (currentUser) {
               const fresh = usersData.find(u => u.id === currentUser.id);
               if (fresh) { currentUser = fresh; updateUserHeaderBadge(); }
