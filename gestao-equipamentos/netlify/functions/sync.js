@@ -1,29 +1,6 @@
-const PERSISTENT_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a120cc1ed32dde';
+const PERSISTENT_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a12188216a2f77';
 
-let globalOccurrences = [
-  {
-    id: "EQP-42-6",
-    status: "MANUTENCAO",
-    issue: "Manutenção ocorrera no dia 09/10/2026, alinhado com o Leandro e o Cauê - Sistema não comunica no portal",
-    reporter: "Técnico Cauê",
-    reportedAt: new Date().toISOString(),
-    actionStage: "TECNICO_AGENDADO",
-    actionNote: "Manutenção alinhada para 09/10/2026 com Leandro e Cauê.",
-    lastActionAt: new Date().toISOString(),
-    lastUpdatedBy: "Técnico Cauê"
-  },
-  {
-    id: "EQP-411-92",
-    status: "DESMOBILIZACAO",
-    issue: "Equipamento será desmobilizado no dia 13/10/2026.",
-    reporter: "Técnico Anderson",
-    reportedAt: new Date().toISOString(),
-    actionStage: "DESMOBILIZACAO_AGENDADA",
-    actionNote: "Equipamento será desmobilizado no dia 13/10/2026. Retorno à fábrica.",
-    lastActionAt: new Date().toISOString(),
-    lastUpdatedBy: "Técnico Anderson"
-  }
-];
+let globalOccurrences = [];
 
 let globalUsers = [
   { id: 'usr-master', name: 'Controlador Master', username: 'master', pass: '123456', role: 'MASTER', allowedTech: 'all' },
@@ -64,7 +41,7 @@ exports.handler = async (event, context) => {
       // Persist to cloud storage so data survives serverless cold restarts
       try {
         const payload = {
-          name: "gestao_br_fleet_v9",
+          name: "gestao_br_fleet_v10_prod",
           data: {
             occurrences: globalOccurrences,
             users: globalUsers

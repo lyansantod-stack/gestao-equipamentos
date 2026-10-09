@@ -808,57 +808,22 @@
       const list = [];
       INITIAL_EQUIPMENTS.forEach(e => {
         const id = `EQP-${e.clientCode}-${e.equipNumber}`;
-        if (id === 'EQP-42-6') {
-          // 03-EURO-ITP (Técnico Cauê)
-          list.push({
-            id: id,
-            clientCode: e.clientCode,
-            clientName: e.clientName,
-            equipNumber: e.equipNumber,
-            tech: e.tech,
-            state: e.state || 'SP',
-            status: 'MANUTENCAO',
-            issue: 'Manutenção ocorrera no dia 09/10/2026, alinhado com o Leandro e o Cauê - Sistema não comunica no portal',
-            reporter: 'Técnico Cauê',
-            reportedAt: new Date().toISOString(),
-            actionStage: 'TECNICO_AGENDADO',
-            actionNote: 'Manutenção alinhada para 09/10/2026 com Leandro e Cauê.',
-            lastActionAt: new Date().toISOString()
-          });
-        } else if (id === 'EQP-411-92') {
-          // Pepsico (Técnico Anderson)
-          list.push({
-            id: id,
-            clientCode: e.clientCode,
-            clientName: e.clientName,
-            equipNumber: e.equipNumber,
-            tech: e.tech,
-            state: e.state || 'SP',
-            status: 'DESMOBILIZACAO',
-            issue: 'Equipamento será desmobilizado no dia 13/10/2026.',
-            reporter: 'Técnico Anderson',
-            reportedAt: new Date().toISOString(),
-            actionStage: 'DESMOBILIZACAO_AGENDADA',
-            actionNote: 'Equipamento será desmobilizado no dia 13/10/2026. Retorno à fábrica.',
-            lastActionAt: new Date().toISOString()
-          });
-        } else {
-          list.push({
-            id: id,
-            clientCode: e.clientCode,
-            clientName: e.clientName,
-            equipNumber: e.equipNumber,
-            tech: e.tech,
-            state: e.state || 'SP',
-            status: 'NORMAL',
-            issue: null,
-            reporter: null,
-            reportedAt: null,
-            actionStage: 'REGISTRADO',
-            actionNote: '',
-            lastActionAt: null
-          });
-        }
+        list.push({
+          id: id,
+          clientCode: e.clientCode,
+          clientName: e.clientName,
+          equipNumber: e.equipNumber,
+          tech: e.tech,
+          state: e.state || 'SP',
+          status: 'NORMAL',
+          issue: null,
+          reporter: null,
+          reportedAt: null,
+          actionStage: 'REGISTRADO',
+          actionNote: '',
+          lastActionAt: null,
+          lastUpdatedBy: null
+        });
       });
       return list;
     }
