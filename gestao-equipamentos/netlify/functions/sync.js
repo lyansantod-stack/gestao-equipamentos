@@ -15,7 +15,7 @@ const KEY = 'fleet-state';
 
 async function loadStore(store) {
   const state = { occurrences: [], users: DEFAULT_USERS, history: [] };
-  const saved = await store.get(KEY, { type: 'json', consistency: 'strong' });
+  const saved = await store.get(KEY, { type: 'json' });
   if (saved) {
     if (Array.isArray(saved.occurrences)) state.occurrences = saved.occurrences;
     if (Array.isArray(saved.users) && saved.users.length > 0) state.users = saved.users;
@@ -37,7 +37,7 @@ exports.handler = async (event) => {
 
   try {
     connectLambda(event);
-    const store = getStore({ name: 'gestao-equipamentos', consistency: 'strong' });
+    const store = getStore({ name: 'gestao-equipamentos' });
 
     if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
