@@ -1114,7 +1114,8 @@
       renderHistoryView();
 
       await fetchCloudData();
-      setInterval(fetchCloudData, 3000);
+      setInterval(() => { if (!document.hidden) fetchCloudData(); }, 15000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchCloudData(); });
     }
 
     function saveLocalCache() {

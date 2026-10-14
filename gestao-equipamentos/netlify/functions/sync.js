@@ -1,4 +1,4 @@
-const PERSISTENT_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a12188216a2f77';
+const { getStore, connectLambda } = require('@netlify/blobs');
 
 const DEFAULT_USERS = [
   { id: 'usr-master', name: 'Controlador Master', username: 'master', pass: '123456', role: 'MASTER', allowedTech: 'all' },
@@ -11,30 +11,17 @@ const DEFAULT_USERS = [
   { id: 'usr-bruno', name: 'Técnico Bruno', username: 'bruno', pass: 'bruno123', role: 'TECH', allowedTech: 'Técnico Bruno' }
 ];
 
-async function loadStore() {
-  const store = { occurrences: [], users: DEFAULT_USERS, history: [] };
-  try {
-    const res = await fetch(PERSISTENT_URL, { cache: 'no-store' });
-    if (res.ok) {
-      const obj = await res.json();
-      if (obj && obj.data) {
-        if (Array.isArray(obj.data.occurrences)) store.occurrences = obj.data.occurrences;
-        if (Array.isArray(obj.data.users) && obj.data.users.length > 0) store.users = obj.data.users;
-        if (Array.isArray(obj.data.history)) store.history = obj.data.history;
-      }
-    }
-  } catch (e) {
-    console.warn('Persistent GET warning:', e);
-  }
-  return store;
-}
+const KEY = 'fleet-state';
 
-async function saveStore(store) {
-  await fetch(PERSISTENT_URL, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'gestao_br_fleet_v10_prod', data: store })
-  });
+async function loadStore(store) {
+  const state = { occurrences: [], users: DEFAULT_USERS, history: [] };
+  const saved = await store.get(KEY, { type: 'json', consistency: 'strong' });
+  if (saved) {
+    if (Array.isArray(saved.occurrences)) state.occurrences = saved.occurrences;
+    if (Array.isArray(saved.users) && saved.users.length > 0) state.users = saved.users;
+    if (Array.isArray(saved.history)) state.history = saved.history;
+  }
+  return state;
 }
 
 exports.handler = async (event) => {
@@ -48,15 +35,18 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
-  if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
-    try {
+  try {
+    connectLambda(event);
+    const store = getStore({ name: 'gestao-equipamentos', consistency: 'strong' });
+
+    if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
       const data = body.data || body;
-      const store = await loadStore();
+      const state = await loadStore(store);
 
-      // 1) Merge occurrence changes individually (newest updatedAt wins)
+      // Ocorrências: merge individual (updatedAt mais recente vence)
       if (Array.isArray(data.changes)) {
-        const map = new Map(store.occurrences.map(o => [o.id, o]));
+        const map = new Map(state.occurrences.map(o => [o.id, o]));
         data.changes.forEach(c => {
           if (!c || !c.id) return;
           const existing = map.get(c.id);
@@ -64,27 +54,27 @@ exports.handler = async (event) => {
           if (c.status === 'NORMAL') map.delete(c.id);
           else map.set(c.id, c);
         });
-        store.occurrences = Array.from(map.values());
+        state.occurrences = Array.from(map.values());
       }
 
-      // 2) Merge history (union by id, newest first, max 500)
+      // Histórico: união por id
       if (Array.isArray(data.historyAdd) && data.historyAdd.length) {
-        const ids = new Set(store.history.map(h => h.id));
-        data.historyAdd.forEach(h => { if (h && h.id && !ids.has(h.id)) store.history.push(h); });
-        store.history.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-        store.history = store.history.slice(0, 500);
+        const ids = new Set(state.history.map(h => h.id));
+        data.historyAdd.forEach(h => { if (h && h.id && !ids.has(h.id)) state.history.push(h); });
+        state.history.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        state.history = state.history.slice(0, 1000);
       }
 
-      // 3) Users only replaced when explicitly sent
-      if (Array.isArray(data.users) && data.users.length > 0) store.users = data.users;
+      if (Array.isArray(data.users) && data.users.length > 0) state.users = data.users;
 
-      await saveStore(store);
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, data: store }) };
-    } catch (err) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: err.message }) };
+      await store.setJSON(KEY, state);
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, data: state }) };
     }
-  }
 
-  const store = await loadStore();
-  return { statusCode: 200, headers, body: JSON.stringify({ data: store }) };
+    const state = await loadStore(store);
+    return { statusCode: 200, headers, body: JSON.stringify({ data: state }) };
+  } catch (err) {
+    console.error('sync error', err);
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+  }
 };
