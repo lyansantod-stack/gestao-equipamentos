@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -59,6 +59,7 @@
             <span>📜</span>
             <span>Histórico</span>
           </button>
+          <button id="btn-view-machines" onclick="switchView('machines')" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900"><span>⚙️</span><span>Máquinas</span></button>
           <button id="btn-view-users" onclick="switchView('users')" 
             class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900">
             <span>👥</span>
@@ -515,6 +516,107 @@
 
     </section>
 
+      <!-- ========================================================================= -->
+    <!-- VIEW 6: CADASTRO E GESTAO DO PARQUE DE MAQUINAS                           -->
+    <!-- ========================================================================= -->
+    <section id="view-machines" class="hidden space-y-6 max-w-6xl mx-auto">
+      
+      <!-- HEADER DO CATALOGO DE MAQUINAS -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-[var(--foreground)]">ðŸ­ Cadastro e GestÃ£o do Parque de MÃ¡quinas</h2>
+            <span id="machines-catalog-total-count" class="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">146 Equipamentos</span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] mt-0.5">Cadastre novas mÃ¡quinas vinculadas aos tÃ©cnicos, edite dados cadastrais e gerencie a frota ativa.</p>
+        </div>
+
+        <button id="btn-new-machine" onclick="openCreateMachineModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all">
+          <span>âž•</span> Cadastrar Nova MÃ¡quina
+        </button>
+      </div>
+
+      <!-- FILTROS DE PESQUISA -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Buscar por Cliente, CÃ³d ou EQP:</label>
+            <input type="text" id="machine-catalog-search" placeholder="Ex: CARREFOUR, 241, 119..." oninput="renderMachinesCatalogView()"
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por TÃ©cnico da Unidade:</label>
+            <select id="machine-catalog-filter-tech" onchange="renderMachinesCatalogView()"
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todos os TÃ©cnicos</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por Estado (UF):</label>
+            <select id="machine-catalog-filter-uf" onchange="renderMachinesCatalogView()"
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todos os Estados</option>
+              <option value="SP">SÃ£o Paulo (SP)</option>
+              <option value="RJ">Rio de Janeiro (RJ)</option>
+              <option value="MG">Minas Gerais (MG)</option>
+              <option value="PR">ParanÃ¡ (PR)</option>
+              <option value="SC">Santa Catarina (SC)</option>
+              <option value="RS">Rio Grande do Sul (RS)</option>
+              <option value="BA">Bahia (BA)</option>
+              <option value="PE">Pernambuco (PE)</option>
+              <option value="CE">CearÃ¡ (CE)</option>
+              <option value="GO">GoiÃ¡s (GO)</option>
+              <option value="DF">Distrito Federal (DF)</option>
+              <option value="ES">EspÃ­rito Santo (ES)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">Filtrar por SituaÃ§Ã£o Operacional:</label>
+            <select id="machine-catalog-filter-status" onchange="renderMachinesCatalogView()"
+              class="w-full px-3 py-1.5 rounded-lg text-xs bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+              <option value="all">Todas as SituaÃ§Ãµes</option>
+              <option value="NORMAL">âœ… Normal / Operacional</option>
+              <option value="DESLIGADA">ðŸ”´ Desligada</option>
+              <option value="FALTA_PECA">ðŸŸ¡ Falta de PeÃ§a</option>
+              <option value="MANUTENCAO">ðŸŸ  ManutenÃ§Ã£o</option>
+              <option value="DESMOBILIZACAO">ðŸŸ£ DesmobilizaÃ§Ã£o</option>
+              <option value="ALARME">ðŸš¨ Alarme Ativo</option>
+              <option value="MOBILIZACAO">ðŸ”µ MobilizaÃ§Ã£o</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA DE MAQUINAS -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-[var(--border)] text-[var(--muted-foreground)] font-semibold">
+              <tr>
+                <th class="py-3 px-4">EQP NÂ°</th>
+                <th class="py-3 px-4">Cliente / Unidade</th>
+                <th class="py-3 px-4">CÃ³d.</th>
+                <th class="py-3 px-4">UF</th>
+                <th class="py-3 px-4">TÃ©cnico ResponsÃ¡vel</th>
+                <th class="py-3 px-4">Status Atual</th>
+                <th class="py-3 px-4 text-right">AÃ§Ãµes</th>
+              </tr>
+            </thead>
+            <tbody id="machines-catalog-tbody" class="divide-y divide-[var(--border)]">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="machines-catalog-empty" class="hidden p-8 text-center text-xs text-[var(--muted-foreground)]">
+          Nenhuma mÃ¡quina encontrada para os filtros selecionados.
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
   <!-- MODAL FOR CONTROLLER (ALTA VISIBILIDADE E CONTRASTE) -->
@@ -589,7 +691,7 @@
 
       <!-- MODAL FOOTER BUTTONS -->
       <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-        <button onclick="promptDeleteOccurrenceFromModal()" class="px-3 py-2.5 rounded-xl text-xs font-bold bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition-all flex items-center gap-1" title="Excluir ocorrência aberta por engano (Exige Senha Master 123456)">
+        <button id="modal-btn-delete-occ" onclick="promptDeleteOccurrenceFromModal()" class="px-3 py-2.5 rounded-xl text-xs font-bold bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition-all flex items-center gap-1" title="Excluir ocorrência aberta por engano (Exige Senha Master 123456)">
           <span>🗑️</span> Excluir (Erro de Lançamento)
         </button>
         <div class="flex gap-2">
@@ -682,6 +784,7 @@
           <label class="block font-bold text-[var(--foreground)] mb-1">Perfil de Acesso / Função:</label>
           <select id="user-form-role" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
             <option value="TECH">👨‍🔧 Técnico de Campo</option>
+            <option value="OPERATOR">👔 Operador / Assistente (Visualização e Atualizações, Sem Exclusão)</option>
             <option value="MASTER">👑 Controlador Master (Acesso Total)</option>
           </select>
         </div>
@@ -877,6 +980,7 @@
 
     const INITIAL_USERS = [
       { id: 'usr-master', name: 'Controlador Master', username: 'master', pass: '123456', role: 'MASTER', allowedTech: 'all' },
+      { id: 'usr-operador', name: 'Operador Geral', username: 'operador', pass: 'operador123', role: 'OPERATOR', allowedTech: 'all' },
       { id: 'usr-joao', name: 'Técnico João', username: 'joao', pass: 'joao123', role: 'TECH', allowedTech: 'Técnico João' },
       { id: 'usr-caue', name: 'Técnico Cauê', username: 'caue', pass: 'caue123', role: 'TECH', allowedTech: 'Técnico Cauê' },
       { id: 'usr-anderson', name: 'Técnico Anderson', username: 'anderson', pass: 'anderson123', role: 'TECH', allowedTech: 'Técnico Anderson' },
@@ -944,10 +1048,26 @@
       }
     };
 
+        function getCatalogList() {
+      const stored = localStorage.getItem('fleet_v9_catalog');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch(e) {}
+      }
+      return INITIAL_EQUIPMENTS;
+    }
+
+    function saveCatalogList(catalog) {
+      localStorage.setItem('fleet_v9_catalog', JSON.stringify(catalog));
+    }
+
     function generateDataset() {
       const list = [];
-      INITIAL_EQUIPMENTS.forEach(e => {
-        const id = `EQP-${e.clientCode}-${e.equipNumber}`;
+      const catalog = getCatalogList();
+      catalog.forEach(e => {
+        const id = EQP--;
         list.push({
           id: id,
           clientCode: e.clientCode,
@@ -1015,7 +1135,8 @@
       usersData.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
-        opt.textContent = `${u.role === 'MASTER' ? '👑' : '👨‍🔧'} ${u.name} (${u.username})`;
+        const icon = u.role === 'MASTER' ? '👑' : (u.role === 'OPERATOR' ? '👔' : '👨‍🔧');
+        opt.textContent = `${icon} ${u.name} (${u.username})`;
         select.appendChild(opt);
       });
 
@@ -1069,9 +1190,13 @@
       const displayInput = document.getElementById('mobile-reporter-display');
       if (!displayInput) return;
       if (currentUser) {
-        displayInput.value = `👤 ${currentUser.name} (${currentUser.role === 'MASTER' ? 'Master' : 'Técnico'})`;
+        const rName = currentUser.role === 'MASTER' ? 'Master' : (currentUser.role === 'OPERATOR' ? 'Operador' : 'Técnico');
+        displayInput.value = `👤 ${currentUser.name} (${rName})`;
       } else {
         const techSelect = document.getElementById('mobile-tech-select');
+
+
+
         const techVal = techSelect ? techSelect.value : '';
         displayInput.value = techVal ? `👤 ${techVal}` : 'Nenhum usuário logado';
       }
@@ -1080,13 +1205,14 @@
     function updateUserHeaderBadge() {
       const nameEl = document.getElementById('user-logged-name');
       const iconEl = document.getElementById('user-avatar-icon');
+
       if (!currentUser) {
         nameEl.textContent = 'Não Logado';
         iconEl.textContent = '👤'; updateMobileReporterDisplay();
         return;
       }
-      nameEl.textContent = `${currentUser.name} (${currentUser.role === 'MASTER' ? 'Master' : 'Técnico'})`;
-      iconEl.textContent = currentUser.role === 'MASTER' ? '👑' : '👨‍🔧'; updateMobileReporterDisplay();
+      const roleName = currentUser.role === 'MASTER' ? 'Master' : (currentUser.role === 'OPERATOR' ? 'Operador' : 'Técnico'); nameEl.textContent = `${currentUser.name} (${roleName})`;
+      const roleIcon = currentUser.role === 'MASTER' ? '👑' : (currentUser.role === 'OPERATOR' ? '👔' : '👨‍🔧'); iconEl.textContent = roleIcon; updateMobileReporterDisplay();
     }
 
     function applyUserPermissions() {
@@ -1094,22 +1220,34 @@
       const btnReset = document.getElementById('btn-reset-data');
       const techSelect = document.getElementById('mobile-tech-select');
 
+
+
+
+
       if (!currentUser) {
         if (btnUsers) btnUsers.classList.add('hidden');
         if (btnReset) btnReset.classList.add('hidden');
+        const btnNewMachine = document.getElementById('btn-new-machine');
+        if (btnNewMachine) btnNewMachine.classList.add('hidden');
         return;
       }
 
       if (currentUser.role === 'TECH') {
         if (btnUsers) btnUsers.classList.add('hidden');
         if (btnReset) btnReset.classList.add('hidden');
+        const btnNewMachine = document.getElementById('btn-new-machine');
+        if (btnNewMachine) btnNewMachine.classList.add('hidden');
         if (techSelect && currentUser.allowedTech !== 'all') {
           techSelect.value = currentUser.allowedTech;
           onMobileTechChange();
         }
       } else {
-        if (btnUsers) btnUsers.classList.remove('hidden');
-        if (btnReset) btnReset.classList.remove('hidden');
+        const isMaster = currentUser.role === 'MASTER';
+        const btnNewMachine = document.getElementById('btn-new-machine');
+        if (btnUsers) { if (isMaster) btnUsers.classList.remove('hidden'); else btnUsers.classList.add('hidden'); }
+        if (btnReset) { if (isMaster) btnReset.classList.remove('hidden'); else btnReset.classList.add('hidden'); }
+        if (btnNewMachine) { if (isMaster) btnNewMachine.classList.remove('hidden'); else btnNewMachine.classList.add('hidden'); }
+
       }
     }
 
@@ -1136,7 +1274,9 @@
       renderEmailPreview();
       renderUsersTable();
       populateHistoryUserFilter();
-      renderHistoryView();
+              renderHistoryView();
+        populateMachineTechFilter();
+        renderMachinesCatalogView();
 
       await fetchCloudData();
       setInterval(() => { if (!document.hidden) fetchCloudData(); }, 15000);
@@ -1209,6 +1349,12 @@
           usersData = store.users;
           localStorage.setItem('fleet_v9_users', newUsersJson);
           renderUsersTable();
+  
+
+
+
+
+
           populateLoginUserDropdown();
         }
         if (currentUser) {
@@ -1218,6 +1364,14 @@
       }
 
       // Histórico
+            // Catalogo de Maquinas da Nuvem
+      if (Array.isArray(store.catalog) && store.catalog.length > 0) {
+        const catJson = JSON.stringify(store.catalog);
+        if (catJson !== localStorage.getItem('fleet_v9_catalog')) {
+          saveCatalogList(store.catalog);
+        }
+      }
+
       if (Array.isArray(store.history)) {
         cloudHistoryIds = new Set(store.history.map(h => h.id));
         const localOnly = historyLogs.filter(h => !cloudHistoryIds.has(h.id));
@@ -1286,7 +1440,19 @@
       });
       const historyAdd = historyLogs.filter(h => !cloudHistoryIds.has(h.id));
       const usersJson = JSON.stringify(usersData);
-      const payload = { data: { changes, historyAdd } };
+            const payload = { 
+        data: { 
+          changes, 
+          historyAdd,
+          catalog: machinesData.map(m => ({
+            clientName: m.clientName,
+            clientCode: m.clientCode,
+            equipNumber: m.equipNumber,
+            tech: m.tech,
+            state: m.state || 'SP'
+          }))
+        } 
+      };
       if (cloudUsersJson !== null && usersJson !== cloudUsersJson) payload.data.users = usersData;
 
       syncInFlight = true;
@@ -1384,6 +1550,7 @@
       document.getElementById('view-email').classList.add('hidden');
       document.getElementById('view-history').classList.add('hidden');
       document.getElementById('view-users').classList.add('hidden');
+      if (document.getElementById('view-machines')) document.getElementById('view-machines').classList.add('hidden');
 
       const inactiveClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold smooth-transition text-slate-600 dark:text-slate-300 hover:text-slate-900';
       const activeClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold smooth-transition bg-blue-600 text-white shadow-sm';
@@ -1393,6 +1560,7 @@
       document.getElementById('btn-view-email').className = inactiveClass;
       document.getElementById('btn-view-history').className = inactiveClass;
       document.getElementById('btn-view-users').className = inactiveClass;
+      if (document.getElementById('btn-view-machines')) document.getElementById('btn-view-machines').className = inactiveClass;
 
       if (viewName === 'controller') {
         document.getElementById('view-controller').classList.remove('hidden');
@@ -1417,8 +1585,23 @@
           return;
         }
         document.getElementById('view-users').classList.remove('hidden');
-        document.getElementById('btn-view-users').className = activeClass;
-        renderUsersTable();
+        document.getElementById('btn-view-users').className = activeClass; renderUsersTable();
+
+
+      } else if (viewName === 'machines') {
+        const vm = document.getElementById('view-machines');
+        const bm = document.getElementById('btn-view-machines');
+        if (vm) vm.classList.remove('hidden');
+        if (bm) bm.className = activeClass;
+        populateMachineTechFilter(); renderMachinesCatalogView();
+
+
+
+
+
+
+
+
       }
     }
 
@@ -1631,6 +1814,7 @@
         const reportedByStr = m.reporter || m.tech;
         const lastUpdatedByStr = m.lastUpdatedBy || m.reporter || m.tech;
         const cardUpdates = getMachineUpdates(m);
+        const canDeleteOcc = currentUser && currentUser.role === 'MASTER';
 
         card.innerHTML = `
           <div>
@@ -1699,9 +1883,7 @@
                 <button onclick="openModal('${m.id}')" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1">
                   <span>✏️</span> Atualizar Ação / Baixa
                 </button>
-                <button onclick="promptDeleteOccurrence('${m.id}')" title="Excluir ocorrência aberta por engano (Exige Senha Master 123456)" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1">
-                  <span>🗑️</span> Excluir
-                </button>
+                ${canDeleteOcc ? `<button onclick="promptDeleteOccurrence('${m.id}')" title="Excluir ocorrência aberta por engano" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1"><span>🗑️</span> Excluir</button>` : ''}
               </div>
             ` : `
               <span class="text-[11px] text-gray-400">Sem pendências ativas</span>
@@ -1860,6 +2042,12 @@
         }
       }
 
+            const modalDelBtn = document.getElementById('modal-btn-delete-occ');
+      if (modalDelBtn) {
+        if (currentUser && currentUser.role === 'MASTER') modalDelBtn.classList.remove('hidden');
+        else modalDelBtn.classList.add('hidden');
+      }
+
       document.getElementById('modal-update').classList.remove('hidden');
     }
 
@@ -1918,6 +2106,10 @@
     const MASTER_DELETE_PASSWORD = '123456';
 
     async function promptDeleteOccurrence(id) {
+      if (!currentUser || currentUser.role !== 'MASTER') {
+        alert('🔒 Permissão negada: Somente o perfil Master pode excluir ocorrências.');
+        return;
+      }
       const target = machinesData.find(x => x.id === id);
       if (!target) return;
 
@@ -2156,6 +2348,10 @@
     }
 
     async function deleteUser(id) {
+      if (!currentUser || currentUser.role !== 'MASTER') {
+        alert('🔒 Permissão negada: Somente o perfil Master pode excluir contas.');
+        return;
+      }
       const u = usersData.find(x => x.id === id);
       if (!u) return;
 
@@ -2172,8 +2368,13 @@
           details: `👤 Usuário "${u.name}" (${u.username}) EXCLUÍDO do sistema por ${authorName}.`
         });
         usersData = usersData.filter(x => x.id !== id);
-        await saveUsersData();
-        renderUsersTable();
+        await saveUsersData(); renderUsersTable();
+
+
+
+
+
+
         populateLoginUserDropdown();
         renderHistoryView();
         alert('✅ Usuário excluído com sucesso.');
@@ -2305,6 +2506,406 @@
     }
 
     window.addEventListener('DOMContentLoaded', initData);
-  </script>
+  
+    // =========================================================================
+    // GESTAO DO CATALOGO DE MAQUINAS / PARQUE DE EQUIPAMENTOS
+    // =========================================================================
+
+    function populateMachineTechFilter() {
+      const filterSelect = document.getElementById('machine-catalog-filter-tech');
+      const formSelect = document.getElementById('machine-form-tech');
+      if (!filterSelect && !formSelect) return;
+
+      const techSet = new Set();
+      machinesData.forEach(m => { if (m.tech) techSet.add(m.tech); });
+      ['TÃ©cnico JoÃ£o', 'TÃ©cnico CauÃª', 'TÃ©cnico Anderson', 'TÃ©cnico OtÃ¡vio', 'TÃ©cnico AntÃ´nio', 'TÃ©cnico Francisco', 'TÃ©cnico Bruno'].forEach(t => techSet.add(t));
+      const sortedTechs = Array.from(techSet).sort();
+
+      if (filterSelect) {
+        const curVal = filterSelect.value || 'all';
+        filterSelect.innerHTML = '<option value="all">Todos os TÃ©cnicos</option>' +
+          sortedTechs.map(t => <option value=""></option>).join('');
+        if (sortedTechs.includes(curVal)) filterSelect.value = curVal;
+      }
+
+      if (formSelect) {
+        const curFormVal = formSelect.value;
+        formSelect.innerHTML = sortedTechs.map(t => <option value=""></option>).join('');
+        if (curFormVal && sortedTechs.includes(curFormVal)) formSelect.value = curFormVal;
+      }
+    }
+
+    function renderMachinesCatalogView() {
+      const tbody = document.getElementById('machines-catalog-tbody');
+      const emptyEl = document.getElementById('machines-catalog-empty');
+      const totalCountEl = document.getElementById('machines-catalog-total-count');
+      if (!tbody) return;
+
+      const searchVal = (document.getElementById('machine-catalog-search')?.value || '').trim().toLowerCase();
+      const techVal = document.getElementById('machine-catalog-filter-tech')?.value || 'all';
+      const ufVal = document.getElementById('machine-catalog-filter-uf')?.value || 'all';
+      const statusVal = document.getElementById('machine-catalog-filter-status')?.value || 'all';
+
+      const isMaster = currentUser && currentUser.role === 'MASTER';
+
+      const filtered = machinesData.filter(m => {
+        if (techVal !== 'all' && m.tech !== techVal) return false;
+        if (ufVal !== 'all' && (m.state || 'SP') !== ufVal) return false;
+        if (statusVal !== 'all' && m.status !== statusVal) return false;
+        if (searchVal) {
+          const matchClient = (m.clientName || '').toLowerCase().includes(searchVal);
+          const matchCode = (m.clientCode || '').toLowerCase().includes(searchVal);
+          const matchEqp = (m.equipNumber || '').toLowerCase().includes(searchVal);
+          const matchTech = (m.tech || '').toLowerCase().includes(searchVal);
+          if (!matchClient && !matchCode && !matchEqp && !matchTech) return false;
+        }
+        return true;
+      });
+
+      if (totalCountEl) {
+        totalCountEl.textContent = ${machinesData.length} Equipamentos ( visÃ­veis);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyEl) emptyEl.classList.remove('hidden');
+        return;
+      }
+      if (emptyEl) emptyEl.classList.add('hidden');
+
+      const statusBadges = {
+        NORMAL: '<span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">âœ… Normal</span>',
+        DESLIGADA: '<span class="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700 font-bold px-2 py-0.5 rounded-full text-[10px]">ðŸ”´ Desligada</span>',
+        FALTA_PECA: '<span class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 font-bold px-2 py-0.5 rounded-full text-[10px]">ðŸŸ¡ Falta PeÃ§a</span>',
+        MANUTENCAO: '<span class="bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 border border-orange-300 dark:border-orange-700 font-bold px-2 py-0.5 rounded-full text-[10px]">ðŸŸ  ManutenÃ§Ã£o</span>',
+        DESMOBILIZACAO: '<span class="bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700 font-bold px-2 py-0.5 rounded-full text-[10px]">ðŸŸ£ DesmobilizaÃ§Ã£o</span>',
+        ALARME: '<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700 font-bold px-2 py-0.5 rounded-full text-[10px]">ðŸš¨ Alarme</span>',
+        MOBILIZACAO: '<span class="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 font-bold px-2 py-0.5 rounded-full text-[10px]">ðŸ”µ MobilizaÃ§Ã£o</span>'
+      };
+
+      tbody.innerHTML = filtered.map(m => {
+        const badge = statusBadges[m.status] || <span class="bg-slate-100 text-slate-800 font-bold px-2 py-0.5 rounded-full text-[10px]"></span>;
+        
+        const actionHtml = isMaster ? 
+          <div class="flex items-center justify-end gap-1.5">
+            <button onclick="openEditMachineModal('')" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 font-semibold text-[11px] transition-all flex items-center gap-1" title="Editar dados cadastrais desta mÃ¡quina">
+              <span>âœï¸</span> Editar
+            </button>
+            <button onclick="promptDeleteMachine('')" class="px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-900/40 hover:bg-red-100 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700 font-semibold text-[11px] transition-all flex items-center gap-1" title="Excluir mÃ¡quina da base (Exige senha master 123456)">
+              <span>ðŸ—‘ï¸</span> Excluir
+            </button>
+          </div>
+         : 
+          <span class="text-slate-400 dark:text-slate-500 text-[11px] italic font-medium">VisualizaÃ§Ã£o</span>
+        ;
+
+        return 
+          <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="py-2.5 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">EQP </td>
+            <td class="py-2.5 px-4 font-semibold text-[var(--foreground)]"></td>
+            <td class="py-2.5 px-4 font-mono text-slate-500 dark:text-slate-400"></td>
+            <td class="py-2.5 px-4"><span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px]"></span></td>
+            <td class="py-2.5 px-4 text-slate-700 dark:text-slate-300 font-medium"></td>
+            <td class="py-2.5 px-4"></td>
+            <td class="py-2.5 px-4 text-right"></td>
+          </tr>
+        ;
+      }).join('');
+    }
+
+    function openCreateMachineModal() {
+      if (!currentUser || currentUser.role !== 'MASTER') {
+        alert('ðŸ”’ Apenas o Controlador Master possui permissÃ£o para cadastrar novas mÃ¡quinas.');
+        return;
+      }
+      populateMachineTechFilter();
+      document.getElementById('modal-machine-form-title').innerHTML = 'ðŸ­ Cadastrar Nova MÃ¡quina';
+      document.getElementById('machine-form-mode').value = 'create';
+      document.getElementById('machine-form-id').value = '';
+      document.getElementById('machine-form-client').value = '';
+      document.getElementById('machine-form-code').value = '';
+      document.getElementById('machine-form-eqp').value = '';
+      document.getElementById('machine-form-state').value = 'SP';
+      document.getElementById('machine-form-status').value = 'NORMAL';
+      document.getElementById('modal-machine-form').classList.remove('hidden');
+    }
+
+    function openEditMachineModal(id) {
+      if (!currentUser || currentUser.role !== 'MASTER') {
+        alert('ðŸ”’ Apenas o Controlador Master possui permissÃ£o para editar mÃ¡quinas.');
+        return;
+      }
+      const m = machinesData.find(x => x.id === id);
+      if (!m) return;
+      populateMachineTechFilter();
+      document.getElementById('modal-machine-form-title').innerHTML = âœï¸ Editar MÃ¡quina: EQP ;
+      document.getElementById('machine-form-mode').value = 'edit';
+      document.getElementById('machine-form-id').value = m.id;
+      document.getElementById('machine-form-client').value = m.clientName || '';
+      document.getElementById('machine-form-code').value = m.clientCode || '';
+      document.getElementById('machine-form-eqp').value = m.equipNumber || '';
+      document.getElementById('machine-form-state').value = m.state || 'SP';
+      document.getElementById('machine-form-tech').value = m.tech || '';
+      document.getElementById('machine-form-status').value = m.status || 'NORMAL';
+      document.getElementById('modal-machine-form').classList.remove('hidden');
+    }
+
+    function closeMachineModal() {
+      document.getElementById('modal-machine-form').classList.add('hidden');
+    }
+
+    async function handleSaveMachine(e) {
+      e.preventDefault();
+      if (!currentUser || currentUser.role !== 'MASTER') {
+        alert('ðŸ”’ Apenas o Controlador Master possui permissÃ£o para salvar alteraÃ§Ãµes de mÃ¡quinas.');
+        return;
+      }
+
+      const mode = document.getElementById('machine-form-mode').value;
+      const targetId = document.getElementById('machine-form-id').value;
+      const clientName = document.getElementById('machine-form-client').value.trim();
+      const clientCode = document.getElementById('machine-form-code').value.trim();
+      const equipNumber = document.getElementById('machine-form-eqp').value.trim();
+      const state = document.getElementById('machine-form-state').value;
+      const tech = document.getElementById('machine-form-tech').value;
+      const status = document.getElementById('machine-form-status').value;
+      const authorName = currentUser.name || 'Controlador Master';
+
+      if (!clientName || !clientCode || !equipNumber) {
+        alert('âš ï¸ Preencha todos os campos obrigatÃ³rios.');
+        return;
+      }
+
+      const newId = EQP--;
+
+      if (mode === 'create') {
+        if (machinesData.some(x => x.id === newId)) {
+          alert(âš ï¸ JÃ¡ existe uma mÃ¡quina cadastrada com o cÃ³digo  e EQP !);
+          return;
+        }
+
+        const newMachine = {
+          id: newId,
+          clientCode: clientCode,
+          clientName: clientName,
+          equipNumber: equipNumber,
+          tech: tech,
+          state: state,
+          status: status,
+          issue: status !== 'NORMAL' ? 'OcorrÃªncia registrada no cadastro inicial' : null,
+          reporter: status !== 'NORMAL' ? authorName : null,
+          reportedAt: status !== 'NORMAL' ? new Date().toISOString() : null,
+          actionStage: 'REGISTRADO',
+          actionNote: '',
+          lastActionAt: null,
+          lastUpdatedBy: null,
+          updates: []
+        };
+        machinesData.push(newMachine);
+
+        addHistoryLog({
+          action: 'GESTAO_USUARIO',
+          author: authorName,
+          equipId: newId,
+          clientName: clientName,
+          clientCode: clientCode,
+          equipNumber: equipNumber,
+          details: âž• NOVA MÃQUINA CADASTRADA: EQP  () vinculada ao . Status: .
+        });
+      } else {
+        const m = machinesData.find(x => x.id === targetId);
+        if (!m) {
+          alert('MÃ¡quina nÃ£o encontrada para ediÃ§Ã£o.');
+          return;
+        }
+        const oldInfo = EQP  () - ;
+        m.clientName = clientName;
+        m.clientCode = clientCode;
+        m.equipNumber = equipNumber;
+        m.state = state;
+        m.tech = tech;
+        m.id = newId;
+        if (m.status !== status) {
+          m.status = status;
+          m.lastActionAt = new Date().toISOString();
+          m.lastUpdatedBy = authorName;
+          if (!m.updates) m.updates = [];
+          m.updates.unshift({
+            author: authorName,
+            timestamp: new Date().toISOString(),
+            stage: m.actionStage || 'REGISTRADO',
+            note: Status alterado na ediÃ§Ã£o cadastral da mÃ¡quina para .
+          });
+        }
+
+        addHistoryLog({
+          action: 'GESTAO_USUARIO',
+          author: authorName,
+          equipId: newId,
+          clientName: clientName,
+          clientCode: clientCode,
+          equipNumber: equipNumber,
+          details: âœï¸ DADOS DA MÃQUINA EDITADOS: de [] para [EQP  () -  - ].
+        });
+      }
+
+      // Persist catalog
+      saveCatalogList(machinesData.map(m => ({
+        clientName: m.clientName,
+        clientCode: m.clientCode,
+        equipNumber: m.equipNumber,
+        tech: m.tech,
+        state: m.state || 'SP'
+      })));
+
+      closeMachineModal();
+      saveLocalCache();
+      await pushCloudData();
+
+      populateMachineTechFilter();
+      populateClientFilterOptions();
+      renderTechBreakdown();
+      renderMachinesCatalogView();
+      renderControllerView();
+      renderEmailPreview();
+
+      alert(âœ… MÃ¡quina  salva com sucesso e sincronizada na nuvem!);
+    }
+
+    async function promptDeleteMachine(id) {
+      if (!currentUser || currentUser.role !== 'MASTER') {
+        alert('ðŸ”’ Apenas o Controlador Master possui autorizaÃ§Ã£o para excluir mÃ¡quinas.');
+        return;
+      }
+      const m = machinesData.find(x => x.id === id);
+      if (!m) return;
+
+      const pass = prompt(ðŸ”’ RESTRITO AO CONTROLADOR MASTER\n\nPor favor, informe a SENHA MASTER (123456) para autorizar a EXCLUSÃƒO DEFINITIVA da mÃ¡quina:\nEQP NÂ°  -  ():);
+      if (pass === null) return;
+      if (pass.trim() !== '123456') {
+        alert('âŒ Senha Master incorreta! A exclusÃ£o foi cancelada.');
+        return;
+      }
+
+      if (!confirm(âš ï¸ TEM CERTEZA ABSOLUTA?\n\nDeseja excluir permanentemente a mÃ¡quina EQP  () da base de dados e da nuvem?)) {
+        return;
+      }
+
+      const authorName = currentUser.name || 'Controlador Master';
+      machinesData = machinesData.filter(x => x.id !== id);
+
+      addHistoryLog({
+        action: 'GESTAO_USUARIO',
+        author: authorName,
+        equipId: id,
+        clientName: m.clientName,
+        clientCode: m.clientCode,
+        equipNumber: m.equipNumber,
+        details: ðŸ—‘ï¸ MÃQUINA EXCLUÃDA DA BASE: EQP  () -  por .
+      });
+
+      // Persist catalog
+      saveCatalogList(machinesData.map(x => ({
+        clientName: x.clientName,
+        clientCode: x.clientCode,
+        equipNumber: x.equipNumber,
+        tech: x.tech,
+        state: x.state || 'SP'
+      })));
+
+      saveLocalCache();
+      await pushCloudData();
+
+      populateMachineTechFilter();
+      populateClientFilterOptions();
+      renderTechBreakdown();
+      renderMachinesCatalogView();
+      renderControllerView();
+      renderEmailPreview();
+
+      alert(ðŸ—‘ï¸ MÃ¡quina EQP  excluÃ­da da base de dados com sucesso!);
+    }
+
+</script>
+  <!-- ========================================================================= -->
+  <!-- MODAL: CADASTRAR / EDITAR MAQUINA                                         -->
+  <!-- ========================================================================= -->
+  <div id="modal-machine-form" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <h3 id="modal-machine-form-title" class="text-sm font-bold text-[var(--foreground)]">ðŸ­ Cadastrar Nova MÃ¡quina</h3>
+        <button onclick="closeMachineModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-gray-500 font-bold text-base flex items-center justify-center hover:bg-slate-200">âœ•</button>
+      </div>
+
+      <form onsubmit="handleSaveMachine(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="machine-form-mode" value="create">
+        <input type="hidden" id="machine-form-id" value="">
+        
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Nome do Cliente / Unidade:</label>
+          <input type="text" id="machine-form-client" placeholder="Ex: CARREFOUR TIETE ou ASSAI PRAIA" required
+            class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-[var(--foreground)] mb-1">CÃ³digo do Cliente:</label>
+            <input type="text" id="machine-form-code" placeholder="Ex: 501" required
+              class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-[var(--foreground)] mb-1">NÃºmero do EQP:</label>
+            <input type="text" id="machine-form-eqp" placeholder="Ex: 147" required
+              class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-[var(--foreground)] mb-1">Estado (UF):</label>
+            <select id="machine-form-state" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+              <option value="SP">SÃ£o Paulo (SP)</option>
+              <option value="RJ">Rio de Janeiro (RJ)</option>
+              <option value="MG">Minas Gerais (MG)</option>
+              <option value="PR">ParanÃ¡ (PR)</option>
+              <option value="SC">Santa Catarina (SC)</option>
+              <option value="RS">Rio Grande do Sul (RS)</option>
+              <option value="BA">Bahia (BA)</option>
+              <option value="PE">Pernambuco (PE)</option>
+              <option value="CE">CearÃ¡ (CE)</option>
+              <option value="GO">GoiÃ¡s (GO)</option>
+              <option value="DF">Distrito Federal (DF)</option>
+              <option value="ES">EspÃ­rito Santo (ES)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-[var(--foreground)] mb-1">TÃ©cnico da Unidade:</label>
+            <select id="machine-form-tech" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-[var(--foreground)] mb-1">Status Operacional:</label>
+          <select id="machine-form-status" class="w-full px-3 py-2 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+            <option value="NORMAL">âœ… Normal / Operacional</option>
+            <option value="DESLIGADA">ðŸ”´ Desligada</option>
+            <option value="FALTA_PECA">ðŸŸ¡ Falta de PeÃ§a</option>
+            <option value="MANUTENCAO">ðŸŸ  ManutenÃ§Ã£o</option>
+            <option value="DESMOBILIZACAO">ðŸŸ£ DesmobilizaÃ§Ã£o</option>
+            <option value="ALARME">ðŸš¨ Alarme Ativo</option>
+            <option value="MOBILIZACAO">ðŸ”µ MobilizaÃ§Ã£o</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-[var(--border)]">
+          <button type="button" onclick="closeMachineModal()" class="px-4 py-2 rounded-xl border border-[var(--border)] text-gray-600 dark:text-gray-300 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow transition-all">ðŸ’¾ Salvar MÃ¡quina</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>

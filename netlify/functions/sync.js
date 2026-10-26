@@ -2,6 +2,7 @@ const { getStore, connectLambda } = require('@netlify/blobs');
 
 const DEFAULT_USERS = [
   { id: 'usr-master', name: 'Controlador Master', username: 'master', pass: '123456', role: 'MASTER', allowedTech: 'all' },
+  { id: 'usr-operador', name: 'Operador Geral', username: 'operador', pass: 'operador123', role: 'OPERATOR', allowedTech: 'all' },
   { id: 'usr-joao', name: 'Técnico João', username: 'joao', pass: 'joao123', role: 'TECH', allowedTech: 'Técnico João' },
   { id: 'usr-caue', name: 'Técnico Cauê', username: 'caue', pass: 'caue123', role: 'TECH', allowedTech: 'Técnico Cauê' },
   { id: 'usr-anderson', name: 'Técnico Anderson', username: 'anderson', pass: 'anderson123', role: 'TECH', allowedTech: 'Técnico Anderson' },
@@ -14,12 +15,13 @@ const DEFAULT_USERS = [
 const KEY = 'fleet-state';
 
 async function loadStore(store) {
-  const state = { occurrences: [], users: DEFAULT_USERS, history: [] };
+  const state = { occurrences: [], users: DEFAULT_USERS, history: [], catalog: null };
   const saved = await store.get(KEY, { type: 'json' });
   if (saved) {
     if (Array.isArray(saved.occurrences)) state.occurrences = saved.occurrences;
     if (Array.isArray(saved.users) && saved.users.length > 0) state.users = saved.users;
     if (Array.isArray(saved.history)) state.history = saved.history;
+    if (Array.isArray(saved.catalog)) state.catalog = saved.catalog;
   }
   return state;
 }
@@ -66,6 +68,7 @@ exports.handler = async (event) => {
       }
 
       if (Array.isArray(data.users) && data.users.length > 0) state.users = data.users;
+      if (Array.isArray(data.catalog)) state.catalog = data.catalog;
 
       await store.setJSON(KEY, state);
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, data: state }) };
