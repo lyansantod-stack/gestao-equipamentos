@@ -147,8 +147,15 @@ input, select, textarea { font: inherit; color: var(--texto); }
 .pontos { display: flex; flex-wrap: wrap; gap: 5px; }
 .pt { display: inline-block; width: 12px; height: 12px; padding: 0; border: 0; border-radius: 4px; background: rgba(166,227,138,.28); }
 .pt--x { border-radius: 50%; transform: scale(1.18); background: var(--cor); box-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 0 14px var(--cor); }
+button.pt { cursor: pointer; transition: transform .15s ease, background-color .15s ease; outline: none; }
+button.pt:hover { transform: scale(1.35); background: rgba(166,227,138,.55); }
 button.pt--x { cursor: pointer; }
-button.pt--x:hover { transform: scale(1.45); }
+button.pt--x:hover { transform: scale(1.55); box-shadow: 0 0 0 4px rgba(255,255,255,.15), 0 0 18px var(--cor); }
+.matrix-tooltip { position: fixed; z-index: 99999; pointer-events: none; background: rgba(15, 33, 23, .97); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); color: #fff; padding: 10px 14px; border-radius: 12px; font-size: 12px; line-height: 1.4; max-width: 320px; transition: opacity .12s ease; transform: translate(-50%, -100%); margin-top: -12px; }
+.matrix-tooltip.hidden { opacity: 0; visibility: hidden; }
+.matrix-tooltip b { display: block; font-size: 13.5px; color: #f1f8f3; margin-bottom: 2px; }
+.matrix-tooltip .alerta-tag { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 11px; font-weight: 700; margin: 3px 0 5px; }
+.matrix-tooltip .relato-txt { color: #cbd5e1; font-size: 11.5px; margin-top: 3px; max-height: 80px; overflow-y: auto; line-height: 1.35; }
 .tecnico__qtd { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 13px; color: #a6c6b1; white-space: nowrap; }
 .aberta { padding: 2px 8px; border-radius: 999px; background: rgba(255,143,132,.16); color: #ffb3aa; font-weight: 600; }
 .legenda { position: relative; display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); font-size: 12.5px; color: #a6c6b1; }
@@ -622,6 +629,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
           </div>
           <div id="tech-breakdown-list" class="tecnicos"></div>
           <div class="legenda" id="frota-legenda"></div>
+          <div id="matrix-tooltip" class="matrix-tooltip hidden" aria-hidden="true"></div>
         </section>
 
         <div class="grade-painel">
@@ -1448,11 +1456,70 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       localStorage.setItem('fleet_v9_catalog', JSON.stringify(catalog));
     }
 
+    const INITIAL_OCCURRENCES = [
+      {
+        id: 'EQP-328-137', // Cauê - JOAO-ROCHE
+        status: 'MANUTENCAO',
+        issue: 'Agendado para verificação da comunicação do equipamento no portal técnico e transmissão do inversor.',
+        reporter: 'Técnico Cauê',
+        reportedAt: '2026-10-08T09:00:00.000Z',
+        actionStage: 'REGISTRADO',
+        actionNote: 'Cauê abriu uma ocorrência',
+        lastActionAt: '2026-10-08T09:00:00.000Z',
+        lastUpdatedBy: 'Técnico Cauê'
+      },
+      {
+        id: 'EQP-416-276', // Cauê - PINH-INSTITUTO
+        status: 'MANUTENCAO',
+        issue: 'Agendado para verificação da bomba de recalque e sensor de nível.',
+        reporter: 'Técnico Cauê',
+        reportedAt: '2026-10-12T14:30:00.000Z',
+        actionStage: 'TECNICO_AGENDADO',
+        actionNote: 'Técnico agendado para visita no cliente.',
+        lastActionAt: '2026-10-12T14:30:00.000Z',
+        lastUpdatedBy: 'Técnico Cauê'
+      },
+      {
+        id: 'EQP-388-193', // Otávio - LIME-MAHLE
+        status: 'MANUTENCAO',
+        issue: 'Ruído incomum no redutor durante ciclo de agitação. Programada troca de rolamentos.',
+        reporter: 'Técnico Otávio',
+        reportedAt: '2026-10-14T11:20:00.000Z',
+        actionStage: 'PECA_SOLICITADA',
+        actionNote: 'Solicitada peça sobressalente.',
+        lastActionAt: '2026-10-14T11:20:00.000Z',
+        lastUpdatedBy: 'Técnico Otávio'
+      },
+      {
+        id: 'EQP-343-127', // Antônio - 01 JAPA-RESORT
+        status: 'DESLIGADA',
+        issue: 'Equipamento desligado temporariamente para manutenção estrutural da casa de bombas do cliente.',
+        reporter: 'Técnico Antônio',
+        reportedAt: '2026-10-16T12:00:00.000Z',
+        actionStage: 'REGISTRADO',
+        actionNote: 'Antônio abriu uma ocorrência',
+        lastActionAt: '2026-10-16T12:00:00.000Z',
+        lastUpdatedBy: 'Técnico Antônio'
+      },
+      {
+        id: 'EQP-343-186', // Antônio - 02 JAPA-RESORT
+        status: 'DESLIGADA',
+        issue: 'Maquina Desligada.\nReforma do cliente para adequação da ETE, estão aguardando uma tela para a rede da ETE com previsão de chegada na segunda quinzena de Dezembro. Provavel reinstalação em Janeiro de 2027.',
+        reporter: 'Técnico Antônio',
+        reportedAt: '2026-10-16T12:10:00.000Z',
+        actionStage: 'REGISTRADO',
+        actionNote: 'Antônio abriu uma ocorrência',
+        lastActionAt: '2026-10-16T12:10:00.000Z',
+        lastUpdatedBy: 'Técnico Antônio'
+      }
+    ];
+
     function generateDataset() {
       const list = [];
       const catalog = getCatalogList();
       catalog.forEach(e => {
         const id = `EQP-${e.clientCode}-${e.equipNumber}`;
+        const occ = INITIAL_OCCURRENCES.find(o => o.id === id);
         list.push({
           id: id,
           clientCode: e.clientCode,
@@ -1460,15 +1527,20 @@ select:disabled { opacity: .75; cursor: not-allowed; }
           equipNumber: e.equipNumber,
           tech: e.tech,
           state: e.state || 'SP',
-          status: 'NORMAL',
-          issue: null,
-          reporter: null,
-          reportedAt: null,
-          actionStage: 'REGISTRADO',
-          actionNote: '',
-          lastActionAt: null,
-          lastUpdatedBy: null,
-          updates: []
+          status: occ ? occ.status : 'NORMAL',
+          issue: occ ? occ.issue : null,
+          reporter: occ ? occ.reporter : null,
+          reportedAt: occ ? occ.reportedAt : null,
+          actionStage: occ ? occ.actionStage : 'REGISTRADO',
+          actionNote: occ ? occ.actionNote : '',
+          lastActionAt: occ ? occ.lastActionAt : null,
+          lastUpdatedBy: occ ? occ.lastUpdatedBy : null,
+          updates: occ ? [{
+            author: occ.reporter || 'Técnico',
+            timestamp: occ.reportedAt,
+            stage: occ.actionStage,
+            note: occ.actionNote || occ.issue
+          }] : []
         });
       });
       return list;
@@ -1492,7 +1564,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
     }
 
     function saveLocalCache() {
-      localStorage.setItem('fleet_v9_active_sync', JSON.stringify(machinesData));
+      localStorage.setItem('fleet_v10_active_sync', JSON.stringify(machinesData));
     }
 
     // =========================================================================
@@ -2011,19 +2083,46 @@ select:disabled { opacity: .75; cursor: not-allowed; }
     function renderTechBreakdown() {
       const container = document.getElementById('tech-breakdown-list');
       if (!container) return;
-      const techCounts = {};
-      machinesData.forEach(m => { if (m.tech) techCounts[m.tech] = (techCounts[m.tech] || 0) + 1; });
       const currentTechVal = document.getElementById('filter-tech')?.value || 'all';
-      container.innerHTML = Object.keys(techCounts).sort().map(techName => {
-        const c = techCounts[techName];
+
+      const ordemPadrao = [
+        'Técnico João',
+        'Técnico Cauê',
+        'Técnico Anderson',
+        'Técnico Otávio',
+        'Técnico Antônio',
+        'Técnico Francisco',
+        'Técnico Bruno'
+      ];
+
+      const tecnicosSet = new Set(ordemPadrao);
+      machinesData.forEach(m => { if (m.tech) tecnicosSet.add(m.tech); });
+      const tecnicos = Array.from(tecnicosSet);
+
+      container.innerHTML = tecnicos.map(techName => {
+        const eqs = machinesData.filter(m => m.tech === techName);
+        if (!eqs.length) return '';
+        const ab = eqs.filter(m => m.status !== 'NORMAL').length;
+
+        const pontos = eqs.map(m => {
+          if (m.status === 'NORMAL') {
+            return `<button type="button" class="pt" title="${esc(m.clientName)} (EQP ${esc(m.equipNumber)}) - Operando normal" aria-label="${esc(m.clientName)}" data-client="${esc(m.clientName)}" data-eqp="${esc(m.equipNumber)}" data-status="NORMAL" data-nome="Operando normal" data-cor="normal" data-issue="" onclick="event.stopPropagation(); openModal('${m.id}')"></button>`;
+          }
+          const info = ST_INFO[m.status] || ST_INFO.MANUTENCAO;
+          const descRelato = m.issue ? `&#10;Relatado: ${esc(m.issue)}` : '';
+          const tooltip = `${esc(m.clientName)} (EQP ${esc(m.equipNumber)}) - Alerta: ${esc(info.nome)}${descRelato}`;
+          return `<button type="button" class="pt pt--x" style="--cor: var(--st-${info.cls}-dk)" title="${tooltip}" aria-label="Abrir ${esc(m.clientName)}" data-client="${esc(m.clientName)}" data-eqp="${esc(m.equipNumber)}" data-status="${esc(m.status)}" data-nome="${esc(info.nome)}" data-cor="${info.cls}" data-issue="${esc(m.issue || '')}" onclick="event.stopPropagation(); openModal('${m.id}')"></button>`;
+        }).join('');
+
+        const abTxt = ab ? `<span class="aberta">${ab} ${ab === 1 ? 'aberta' : 'abertas'}</span>` : '';
+        const nomeCurto = techName.replace('Técnico ', '');
         const ativo = (currentTechVal === techName) ? 'ativo' : '';
-        return `<button type="button" class="tec-card ${ativo}" onclick="filtrarTecnico('${esc(techName)}')">
-          <span class="avatar">${iniciais(techName)}</span>
-          <div class="tec-card__txt">
-            <span class="tec-card__nome">${esc(techName.replace('Técnico ', ''))}</span>
-            <span class="tec-card__total">${c} equipamentos</span>
-          </div>
-        </button>`;
+
+        return `<div class="tecnico ${ativo}" onclick="filtrarTecnico('${esc(techName)}')">
+          <button type="button" class="tecnico__nome" onclick="event.stopPropagation(); filtrarTecnico('${esc(techName)}')" title="Filtrar por ${esc(techName)}" aria-pressed="${ativo === 'ativo'}">${esc(nomeCurto)}</button>
+          <span class="pontos">${pontos}</span>
+          <span class="tecnico__qtd">${abTxt}${eqs.length} equip.</span>
+        </div>`;
       }).join('');
     }
 
@@ -2079,7 +2178,9 @@ select:disabled { opacity: .75; cursor: not-allowed; }
 
       const subEl = document.getElementById('frota-sub');
       if (subEl) {
-        subEl.textContent = `${normalCount} de ${totalCount} operando sem ocorrência. Toque num equipamento para ver detalhes.`;
+        subEl.textContent = issuesCount === 0
+          ? `${normalCount} de ${totalCount} operando sem ocorrência. Toque num equipamento para ver detalhes.`
+          : `${normalCount} de ${totalCount} operando sem ocorrência. Cada ponto é um equipamento; toque num ponto aceso para abrir a ocorrência.`;
       }
 
       document.querySelectorAll('.contador-pendencias').forEach(el => {
@@ -2323,21 +2424,44 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       const m = machinesData.find(x => x.id === id);
       if (!m) return;
 
-      document.getElementById('modal-machine-title').textContent = `${m.clientName} - EQP N° ${m.equipNumber}`;
-      document.getElementById('modal-machine-sub').innerHTML = `<span>Cód. ${m.clientCode}</span><span>${ic('local')}${m.state}</span><span>${ic('pessoa')}${m.tech}</span>`;
-      document.getElementById('modal-issue-desc').textContent = m.issue || 'Sem descrição.';
+      document.getElementById('modal-machine-title').textContent = m.clientName;
+      document.getElementById('modal-machine-sub').innerHTML = `<span>EQP ${m.equipNumber}</span><span>Cód. ${m.clientCode}</span><span>${ic('local')}${m.state}</span><span>${ic('pessoa')}${m.tech}</span>`;
+      document.getElementById('modal-issue-desc').textContent = m.issue || (m.status === 'NORMAL' ? 'Equipamento operando normalmente, sem falhas registradas.' : 'Sem descrição.');
 
       const reportedDate = formatDateTime(m.reportedAt);
       const lastUpdatedDate = formatDateTime(m.lastActionAt || m.reportedAt);
       const updatedBy = m.lastUpdatedBy || m.reporter || m.tech;
 
-      document.getElementById('modal-reporter-text').innerHTML = `<b>Abertura:</b> ${m.reporter || m.tech} em ${reportedDate}`;
-      document.getElementById('modal-last-update-text').innerHTML = `<b>Última alteração:</b> ${updatedBy} em ${lastUpdatedDate}`;
+      const reporterInfo = document.getElementById('modal-reporter-info');
+      if (reporterInfo) {
+        if (m.status !== 'NORMAL' && m.reportedAt) {
+          reporterInfo.style.display = 'flex';
+          document.getElementById('modal-reporter-text').innerHTML = `<b>Abertura:</b> ${m.reporter || m.tech} em ${reportedDate}`;
+          document.getElementById('modal-last-update-text').innerHTML = `<b>Última alteração de status:</b> ${updatedBy} em ${lastUpdatedDate}`;
+        } else {
+          reporterInfo.style.display = 'none';
+        }
+      }
 
       const badge = document.getElementById('modal-status-badge');
       if (badge) {
         badge.style = stVars(m.status);
         badge.innerHTML = `${ic((ST_INFO[m.status] || {}).ico || 'alerta')}${(ST_INFO[m.status] || {}).nome || m.status}`;
+      }
+
+      const slaEl = document.getElementById('modal-sla');
+      if (slaEl) {
+        if (m.status !== 'NORMAL') {
+          const hAgo = getHoursAgo(m.lastActionAt || m.reportedAt);
+          const days = Math.floor(hAgo / 24);
+          const remHours = hAgo % 24;
+          const slaTxt = days > 0 ? `${days} d ${remHours} h sem ação` : `${remHours} h sem ação`;
+          slaEl.innerHTML = `${ic('relogio')}${slaTxt}`;
+          slaEl.className = 'selo ' + (hAgo >= 48 ? 'selo--critico' : 'selo--alerta');
+          slaEl.style.display = 'inline-flex';
+        } else {
+          slaEl.style.display = 'none';
+        }
       }
 
       renderEtapas(m.actionStage || 'REGISTRADO');
@@ -2384,11 +2508,39 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       const timeline = document.getElementById('modal-timeline');
       if (!timeline) return;
       const updates = getMachineUpdates(m);
+      if (!updates.length && m.reportedAt) {
+        const autor = m.reporter ? m.reporter.replace('Técnico ', '') : (m.tech ? m.tech.replace('Técnico ', '') : 'Técnico');
+        timeline.innerHTML = `
+          <li>
+            <div class="linha">
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                <i style="width:8px; height:8px; border-radius:50%; background:var(--critico); display:inline-block;"></i>
+                <b>${esc(autor)} abriu uma ocorrência</b>
+              </span>
+            </div>
+            <div class="quando" style="margin-top:3px; padding-left:14px;">${formatDateTime(m.reportedAt)}</div>
+          </li>`;
+        return;
+      }
       if (!updates.length) {
         timeline.innerHTML = '<li class="vazio">Nenhuma nota adicional registrada.</li>';
         return;
       }
-      timeline.innerHTML = updates.map(u => `
+      let html = '';
+      if (m.reportedAt) {
+        const autor = m.reporter ? m.reporter.replace('Técnico ', '') : (m.tech ? m.tech.replace('Técnico ', '') : 'Técnico');
+        html += `
+          <li>
+            <div class="linha">
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                <i style="width:8px; height:8px; border-radius:50%; background:var(--critico); display:inline-block;"></i>
+                <b>${esc(autor)} abriu uma ocorrência</b>
+              </span>
+            </div>
+            <div class="quando" style="margin-top:3px; padding-left:14px;">${formatDateTime(m.reportedAt)}</div>
+          </li>`;
+      }
+      html += updates.map(u => `
         <li>
           <div class="linha">
             <b>${esc(u.author)}</b>
@@ -2398,6 +2550,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
           <div class="detalhe" style="margin-top:2px;">"${esc(cleanUpdateNote(u.note))}"</div>
         </li>
       `).join('');
+      timeline.innerHTML = html;
     }
 
     async function saveControllerAction() {
@@ -3064,6 +3217,57 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       document.body.removeChild(link);
     }
 
+    function setupMatrixTooltip() {
+      const container = document.getElementById('tech-breakdown-list');
+      const tip = document.getElementById('matrix-tooltip');
+      if (!container || !tip) return;
+
+      container.addEventListener('mouseover', (e) => {
+        const btn = e.target.closest('button.pt');
+        if (!btn) return;
+        const client = btn.getAttribute('data-client') || '';
+        const eqp = btn.getAttribute('data-eqp') || '';
+        const status = btn.getAttribute('data-status') || '';
+        const nome = btn.getAttribute('data-nome') || '';
+        const cor = btn.getAttribute('data-cor') || '';
+        const issue = btn.getAttribute('data-issue') || '';
+
+        if (status === 'NORMAL') {
+          tip.innerHTML = `<b>${esc(client)}</b><div style="color:var(--broto); font-size:11.5px; font-weight:600;">EQP ${esc(eqp)} • Operando normal</div>`;
+        } else {
+          tip.innerHTML = `
+            <b>${esc(client)}</b>
+            <div style="font-size:11.5px; color:#cbd5e1; margin-bottom:4px;">EQP ${esc(eqp)}</div>
+            <div class="alerta-tag" style="background:var(--st-${cor}-bg); color:var(--st-${cor}-dk); border:1px solid var(--st-${cor}-dk);">
+              Alerta: ${esc(nome)}
+            </div>
+            ${issue ? `<div class="relato-txt"><b>Relato:</b> ${esc(issue)}</div>` : ''}
+            <div style="font-size:10.5px; color:#94a3b8; margin-top:5px;">Toque para abrir a ocorrência</div>
+          `;
+        }
+        tip.classList.remove('hidden');
+        updateTooltipPos(e);
+      });
+
+      container.addEventListener('mousemove', (e) => {
+        if (!tip.classList.contains('hidden')) {
+          updateTooltipPos(e);
+        }
+      });
+
+      container.addEventListener('mouseout', (e) => {
+        const btn = e.target.closest('button.pt');
+        if (btn) tip.classList.add('hidden');
+      });
+
+      function updateTooltipPos(e) {
+        const x = e.clientX;
+        const y = e.clientY;
+        tip.style.left = `${x}px`;
+        tip.style.top = `${y}px`;
+      }
+    }
+
     // =========================================================================
     // INICIALIZAÇÃO DO SISTEMA
     // =========================================================================
@@ -3071,9 +3275,15 @@ select:disabled { opacity: .75; cursor: not-allowed; }
     async function initData() {
       initUserSession();
 
-      const stored = localStorage.getItem('fleet_v9_active_sync');
+      const stored = localStorage.getItem('fleet_v10_active_sync') || localStorage.getItem('fleet_v9_active_sync');
       if (stored) {
-        try { machinesData = JSON.parse(stored); } catch(e) { machinesData = generateDataset(); }
+        try {
+          machinesData = JSON.parse(stored);
+          if (machinesData.filter(m => m.status !== 'NORMAL').length === 0) {
+            machinesData = generateDataset();
+            saveLocalCache();
+          }
+        } catch(e) { machinesData = generateDataset(); }
       } else {
         machinesData = generateDataset();
       }
@@ -3094,6 +3304,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       renderHistoryView();
       populateMachineTechFilter();
       renderMachinesCatalogView();
+      setupMatrixTooltip();
 
       await fetchCloudData();
     }
