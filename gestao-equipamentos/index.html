@@ -288,15 +288,23 @@ button.pt--x:hover { transform: scale(1.55); box-shadow: 0 0 0 4px rgba(255,255,
 .campo-input { padding-right: 14px; font-weight: 500; }
 .campo-sel::after { content: ""; position: absolute; right: 16px; top: 50%; width: 7px; height: 7px; border-right: 2px solid var(--texto-3); border-bottom: 2px solid var(--texto-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
 .campo-sel select:focus, .campo-input:focus, .campo-texto:focus { border-color: var(--folha); box-shadow: 0 0 0 3px rgba(46,158,91,.15); }
-.eqs { position: relative; display: grid; gap: 8px; max-height: 470px; overflow: auto; padding: 2px; margin: 10px -2px 0; }
-.eq { width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; border: 0; border-radius: 16px; background: #fff; box-shadow: var(--sombra-1); text-align: left; }
-.eq:hover { box-shadow: inset 0 0 0 1px var(--aco-300), var(--sombra-1); }
-.eq.sel { box-shadow: inset 0 0 0 2px var(--folha); background: #f2faf5; }
-.eq__ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--bg); color: var(--cor); }
-.eq b { display: block; font-weight: 650; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.eq small { color: var(--texto-3); font-size: 12.5px; }
-.eq__estado { text-align: right; font-size: 12px; font-weight: 650; color: var(--cor); white-space: nowrap; }
-.eq__estado span { display: block; color: var(--texto-3); font-weight: 500; }
+.eqs { position: relative; display: grid; gap: 8px; max-height: 440px; overflow-y: auto; padding: 4px; margin: 10px -4px 0; scrollbar-width: thin; scrollbar-color: var(--aco-300) transparent; }
+.eq { width: 100%; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--aco-200); border-radius: 16px; background: #fff; box-shadow: var(--sombra-1); text-align: left; cursor: pointer; transition: all .15s ease; outline: none; }
+.eq:hover { border-color: var(--folha); box-shadow: var(--sombra-2); transform: translateY(-1px); }
+.eq.sel { border-color: var(--folha); background: #f0faf3; box-shadow: 0 0 0 2px var(--folha), var(--sombra-1); }
+.eq__ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--bg); color: var(--cor); flex-shrink: 0; }
+.eq__ico .ico { width: 20px; height: 20px; }
+.eq b { display: block; font-weight: 700; font-size: 14.5px; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eq small { display: block; color: var(--texto-2); font-size: 12.5px; margin-top: 2px; }
+.eq__estado { text-align: right; font-size: 12px; font-weight: 700; color: var(--cor); white-space: nowrap; }
+.eq__estado span { display: block; color: var(--texto-3); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+.eq__check { display: none; width: 22px; height: 22px; border-radius: 50%; background: var(--folha); color: #fff; place-items: center; margin-left: 4px; flex-shrink: 0; }
+.eq.sel .eq__check { display: grid; }
+.equip-selecionado { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; margin-top: 10px; border-radius: 14px; background: #eaf7ee; border: 1.5px solid var(--folha); color: var(--texto); }
+.equip-selecionado.hidden { display: none; }
+.equip-selecionado__tag { display: inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--folha-escura); letter-spacing: 0.5px; margin-bottom: 2px; }
+.equip-selecionado b { display: block; font-size: 14px; color: var(--folha-escura); font-weight: 750; }
+.equip-selecionado small { display: block; font-size: 12px; color: var(--texto-2); }
 .vazio { margin: 6px 4px; color: var(--texto-3); font-size: 14px; }
 .situacoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .sit { position: relative; display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 10px 12px; border-radius: 14px; background: #fff; box-shadow: inset 0 0 0 1px var(--aco-200); font-size: 14px; font-weight: 600; cursor: pointer; }
@@ -726,12 +734,33 @@ select:disabled { opacity: .75; cursor: not-allowed; }
                 <option value="Técnico Bruno">Técnico Bruno (7 equipamentos)</option>
               </select></span>
             </div>
-            <div style="position: relative">
-              <span class="rotulo">Equipamento</span>
-              <label class="busca" style="background:#fff"><svg class="ico" aria-hidden="true"><use href="#i-busca"/></svg><input type="text" id="mobile-equip-search" placeholder="Buscar cliente ou EQP" oninput="renderMobileEquipList()" aria-label="Buscar equipamento"></label>
+            <div style="position: relative" class="campo-equip-secao">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span class="rotulo" style="margin-bottom:0">Equipamento</span>
+                <span id="mobile-equip-count" style="font-size:12px; color:var(--texto-3); font-weight:600;"></span>
+              </div>
+              <label class="busca" style="background:#fff; border:1px solid var(--aco-200); box-shadow:var(--sombra-1);">
+                <svg class="ico" aria-hidden="true"><use href="#i-busca"/></svg>
+                <input type="text" id="mobile-equip-search" placeholder="Buscar por cliente, código ou EQP..." oninput="renderMobileEquipList()" aria-label="Buscar equipamento">
+                <button type="button" id="mobile-search-clear" class="icone-btn hidden" onclick="limparBuscaEquip()" title="Limpar busca" style="padding:0; margin:0 4px; width:22px; height:22px; border:0; background:transparent; cursor:pointer;">
+                  <svg class="ico" style="width:14px; height:14px; color:var(--texto-3);" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+              </label>
+
+              <div id="mobile-equip-selected-banner" class="equip-selecionado hidden">
+                <div>
+                  <span class="equip-selecionado__tag">✓ Equipamento Selecionado</span>
+                  <b id="mobile-selected-name">Nome do Cliente</b>
+                  <small id="mobile-selected-meta">EQP 000 • Cód. 000 • SP</small>
+                </div>
+                <button type="button" class="icone-btn" onclick="deselecionarEquipamento()" title="Trocar de equipamento" style="border:0; background:transparent; cursor:pointer; color:var(--texto-2); width:28px; height:28px; display:grid; place-items:center;">
+                  <svg class="ico" style="width:16px; height:16px;" aria-hidden="true"><use href="#i-x"/></svg>
+                </button>
+              </div>
+
               <div id="mobile-equip-list" class="eqs"></div>
-              <select id="mobile-equipment-select" class="sr-select" tabindex="-1" aria-hidden="true">
-                <option value="">Primeiro selecione o técnico</option>
+              <select id="mobile-equipment-select" class="sr-select" tabindex="-1" aria-hidden="true" style="position:absolute; opacity:0; pointer-events:none;">
+                <option value="">Selecione um equipamento</option>
               </select>
             </div>
           </div>
@@ -2320,44 +2349,158 @@ select:disabled { opacity: .75; cursor: not-allowed; }
     // =========================================================================
 
     function onMobileTechChange() {
-      const tech = document.getElementById('mobile-tech-select').value;
-      const searchInput = document.getElementById('mobile-equip-search');
-      if (searchInput) searchInput.value = '';
+      renderMobileEquipList();
+      updateMobileReporterDisplay();
+    }
 
+    function limparBuscaEquip() {
+      const input = document.getElementById('mobile-equip-search');
+      if (input) { input.value = ''; input.focus(); }
+      const clearBtn = document.getElementById('mobile-search-clear');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      renderMobileEquipList();
+    }
+
+    function deselecionarEquipamento() {
+      const sel = document.getElementById('mobile-equipment-select');
+      if (sel) sel.value = '';
+      const banner = document.getElementById('mobile-equip-selected-banner');
+      if (banner) banner.classList.add('hidden');
+      document.querySelectorAll('#mobile-equip-list .eq').forEach(el => {
+        el.classList.remove('sel');
+        el.setAttribute('aria-pressed', 'false');
+      });
+    }
+
+    function escolherEquipamento(id) {
+      const sel = document.getElementById('mobile-equipment-select');
+      if (sel) sel.value = id;
+
+      const m = machinesData.find(x => x.id === id);
+      const banner = document.getElementById('mobile-equip-selected-banner');
+      if (banner && m) {
+        document.getElementById('mobile-selected-name').textContent = m.clientName;
+        document.getElementById('mobile-selected-meta').textContent = `EQP ${m.equipNumber} • Cód. ${m.clientCode} • ${m.state} (${m.tech || 'Sem técnico'})`;
+        banner.classList.remove('hidden');
+      }
+
+      document.querySelectorAll('#mobile-equip-list .eq').forEach(el => {
+        const isTarget = el.getAttribute('onclick')?.includes(`'${id}'`);
+        el.classList.toggle('sel', isTarget);
+        el.setAttribute('aria-pressed', isTarget ? 'true' : 'false');
+      });
+
+      // Pre-select current status in the form radio buttons if appropriate
+      if (m && m.status) {
+        const radio = document.querySelector(`input[name="mobile-status"][value="${m.status}"]`);
+        if (radio) radio.checked = true;
+      }
+    }
+
+    function renderMobileEquipList() {
+      const c = document.getElementById('mobile-equip-list');
+      if (!c) return;
+
+      const tech = document.getElementById('mobile-tech-select')?.value || '';
+      const searchInput = document.getElementById('mobile-equip-search');
+      const q = (searchInput?.value || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('mobile-search-clear');
+      if (clearBtn) clearBtn.classList.toggle('hidden', !q);
+
+      const selSelect = document.getElementById('mobile-equipment-select');
+      const selId = selSelect ? selSelect.value : '';
+
+      // Populate hidden select options
+      if (selSelect) {
+        selSelect.innerHTML = '<option value="">Selecione um equipamento</option>' +
+          machinesData.map(m => `<option value="${m.id}">${esc(m.clientName)} (EQP ${m.equipNumber})</option>`).join('');
+        selSelect.value = selId;
+      }
+
+      // Filter by tech
       let lista = machinesData;
       if (tech && tech !== 'all') {
         lista = machinesData.filter(m => m.tech === tech);
       }
-      renderMobileEquipList(lista);
-      updateMobileReporterDisplay();
-    }
 
-    function renderMobileEquipList(lista) {
-      const c = document.getElementById('mobile-equip-list');
-      if (!c) return;
-      const selId = document.getElementById('mobile-equipment-select').value;
+      // If user typed a search query, filter matching items
+      if (q) {
+        let filtrados = lista.filter(m => {
+          return (m.clientName || '').toLowerCase().includes(q) ||
+                 String(m.clientCode || '').toLowerCase().includes(q) ||
+                 String(m.equipNumber || '').toLowerCase().includes(q) ||
+                 (m.state || '').toLowerCase().includes(q);
+        });
+
+        // If not found in current technician, check across whole fleet
+        if (!filtrados.length && tech && tech !== 'all') {
+          const globalMatch = machinesData.filter(m => {
+            return (m.clientName || '').toLowerCase().includes(q) ||
+                   String(m.clientCode || '').toLowerCase().includes(q) ||
+                   String(m.equipNumber || '').toLowerCase().includes(q) ||
+                   (m.state || '').toLowerCase().includes(q);
+          });
+          if (globalMatch.length) {
+            lista = globalMatch;
+          } else {
+            lista = [];
+          }
+        } else {
+          lista = filtrados;
+        }
+      }
+
+      // Update count label
+      const countEl = document.getElementById('mobile-equip-count');
+      if (countEl) {
+        countEl.textContent = `${lista.length} ${lista.length === 1 ? 'equipamento' : 'equipamentos'}`;
+      }
+
+      // Update banner if selection is active
+      const banner = document.getElementById('mobile-equip-selected-banner');
+      if (selId) {
+        const selM = machinesData.find(x => x.id === selId);
+        if (selM && banner) {
+          document.getElementById('mobile-selected-name').textContent = selM.clientName;
+          document.getElementById('mobile-selected-meta').textContent = `EQP ${selM.equipNumber} • Cód. ${selM.clientCode} • ${selM.state} (${selM.tech || ''})`;
+          banner.classList.remove('hidden');
+        }
+      } else if (banner) {
+        banner.classList.add('hidden');
+      }
+
       if (!lista.length) {
-        c.innerHTML = '<div class="vazio">Nenhum equipamento encontrado.</div>';
+        c.innerHTML = `
+          <div style="padding: 28px 16px; text-align: center; background: #fff; border-radius: 16px; border: 1.5px dashed var(--aco-200); color: var(--texto-2);">
+            <svg class="ico" style="width:30px; height:30px; color:var(--texto-3); margin-bottom:8px;" aria-hidden="true"><use href="#i-busca"/></svg>
+            <p style="font-size:14px; font-weight:700; margin-bottom:4px; color:var(--texto);">Nenhum equipamento encontrado</p>
+            <small style="color:var(--texto-3);">Tente buscar por parte do nome (ex: cepam), número do EQP ou código.</small>
+          </div>`;
         return;
       }
-      c.innerHTML = lista.map(m => {
-        const ativo = m.id === selId ? 'ativo' : '';
-        const temProb = m.status !== 'NORMAL';
-        return `<button type="button" class="equip-item ${ativo} ${temProb ? 'com-problema' : ''}" onclick="escolherEquipamento('${m.id}')">
-          <div class="equip-item__linha1">
-            <b>EQP ${esc(m.equipNumber)}</b>
-            ${temProb ? seloStatus(m.status) : '<span class="selo selo--ok">Operando normal</span>'}
-          </div>
-          <div class="equip-item__sub">${esc(m.clientName)} - Cód. ${esc(m.clientCode)} - ${esc(m.state)}</div>
-        </button>`;
-      }).join('');
-    }
 
-    function escolherEquipamento(id) {
-      document.getElementById('mobile-equipment-select').value = id;
-      document.querySelectorAll('.equip-item').forEach(el => {
-        el.classList.toggle('ativo', el.getAttribute('onclick')?.includes(id));
-      });
+      c.innerHTML = lista.map(m => {
+        const isSel = m.id === selId;
+        const temProb = m.status !== 'NORMAL';
+        const info = ST_INFO[m.status] || ST_INFO.NORMAL;
+
+        return `
+          <button type="button" class="eq ${isSel ? 'sel' : ''}" style="--cor: var(--st-${info.cls}); --bg: var(--st-${info.cls}-bg);" onclick="escolherEquipamento('${m.id}')" aria-pressed="${isSel}">
+            <div class="eq__ico">
+              <svg class="ico" aria-hidden="true"><use href="#i-${info.ico}"/></svg>
+            </div>
+            <div style="min-width:0;">
+              <b>${esc(m.clientName)}</b>
+              <small>EQP ${esc(m.equipNumber)} • Cód. ${esc(m.clientCode)} • ${esc(m.state)}</small>
+            </div>
+            <div class="eq__estado">
+              <span>${temProb ? 'Alerta' : 'Status'}</span>
+              <b>${esc(info.nome)}</b>
+            </div>
+            <div class="eq__check"><svg class="ico" style="width:14px; height:14px;" aria-hidden="true"><use href="#i-ok"/></svg></div>
+          </button>
+        `;
+      }).join('');
     }
 
     function updateMobileReporterDisplay() {
@@ -2374,12 +2517,14 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       e.preventDefault();
       const tech = document.getElementById('mobile-tech-select').value;
       const equipId = document.getElementById('mobile-equipment-select').value;
-      const status = document.getElementById('mobile-status').value;
+      const statusRadio = document.querySelector('input[name="mobile-status"]:checked');
+      const status = statusRadio ? statusRadio.value : '';
       const notes = document.getElementById('mobile-notes').value.trim();
       const authorName = currentUser ? currentUser.name : (tech || 'Técnico de Campo');
 
-      if (!equipId) { alert('Selecione o equipamento que apresentou o problema.'); return; }
-      if (!notes) { alert('Descreva brevemente o problema encontrado.'); return; }
+      if (!equipId) { alert('⚠️ Por favor, selecione um equipamento na lista.'); return; }
+      if (!status) { alert('⚠️ Por favor, selecione a situação do equipamento.'); return; }
+      if (!notes) { alert('⚠️ Descreva brevemente o problema ou a ocorrência encontrada.'); return; }
 
       const m = machinesData.find(x => x.id === equipId);
       if (!m) return;
@@ -2414,13 +2559,14 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       await pushCloudData();
 
       document.getElementById('mobile-notes').value = '';
+      deselecionarEquipamento();
       const msg = document.getElementById('mobile-success-msg');
       if (msg) {
         msg.classList.remove('hidden');
         setTimeout(() => msg.classList.add('hidden'), 4000);
       }
       renderControllerView();
-      onMobileTechChange();
+      renderMobileEquipList();
       alert('✅ Ocorrência registrada com sucesso na nuvem!');
     }
 
