@@ -51,10 +51,23 @@ exports.handler = async (event) => {
         const map = new Map(state.occurrences.map(o => [o.id, o]));
         data.changes.forEach(c => {
           if (!c || !c.id) return;
+          if (c.status === 'NORMAL') {
+            map.delete(c.id);
+            return;
+          }
           const existing = map.get(c.id);
-          if (existing && (existing.updatedAt || '') > (c.updatedAt || '')) return;
-          if (c.status === 'NORMAL') map.delete(c.id);
-          else map.set(c.id, c);
+          const cTime = c.updatedAt || new Date().toISOString();
+          if (existing && existing.updatedAt && existing.updatedAt > cTime) return;
+          map.set(c.id, { ...c, updatedAt: cTime });
+        });
+        state.occurrences = Array.from(map.values());
+      }
+
+      // Exclusões explícitas imediatas (por ID)
+      if (Array.isArray(data.deletions) && data.deletions.length) {
+        const map = new Map(state.occurrences.map(o => [o.id, o]));
+        data.deletions.forEach(delId => {
+          if (delId) map.delete(delId);
         });
         state.occurrences = Array.from(map.values());
       }

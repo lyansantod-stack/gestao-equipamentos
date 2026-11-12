@@ -627,7 +627,10 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       <section id="view-controller" class="vista">
         <div class="topo">
           <div><h1>Painel</h1><p>Gestão por exceção: <span id="header-total-count">146</span> equipamentos, <span id="header-tec-count">7</span> técnicos. Aqui aparece só o que tem pendência.</p></div>
-          <div class="topo__acoes"><button class="btn btn--claro" onclick="switchView('mobile')"><svg class="ico" aria-hidden="true"><use href="#i-celular"/></svg>Registrar pelo campo</button></div>
+          <div class="topo__acoes">
+            <button class="btn btn--primario" onclick="switchView('mobile')"><svg class="ico" aria-hidden="true"><use href="#i-mais"/></svg>+ Nova Ocorrência</button>
+            <button class="btn btn--claro" onclick="switchView('mobile')"><svg class="ico" aria-hidden="true"><use href="#i-celular"/></svg>Registrar pelo campo</button>
+          </div>
         </div>
 
         <section class="frota" aria-label="Situação da frota">
@@ -940,7 +943,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
     </div></main>
   </div>
 
-  - GAVETA DE ATUALIZAÇÃO DO CONTROLADOR -->
+  <!-- GAVETA DE ATUALIZAÇÃO DO CONTROLADOR -->
   <div id="modal-update" class="hidden">
     <div class="veu" onclick="closeModal()"></div>
     <aside class="gaveta" role="dialog" aria-modal="true" aria-labelledby="modal-machine-title">
@@ -952,33 +955,57 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         <div class="gaveta__selos"><span id="modal-status-badge" class="selo">--</span><span id="modal-sla" class="selo"></span></div>
       </div>
       <div class="gaveta__corpo">
-        <div class="bloco">
-          <h4>O que o técnico relatou</h4>
-          <p id="modal-issue-desc" class="texto-oc">--</p>
-          <div id="modal-reporter-info" class="quando"><span id="modal-reporter-text">--</span><span id="modal-last-update-text">--</span></div>
+        <!-- BLOCO PARA INSERIR NOVA OCORRÊNCIA (QUANDO MÁQUINA ESTÁ NORMAL) -->
+        <div id="modal-bloco-nova-oc" class="hidden">
+          <div style="background:var(--floresta-900); color:#fff; padding:12px 14px; border-radius:12px; margin-bottom:14px;">
+            <div style="font-weight:700; font-size:13.5px; margin-bottom:3px;">Inserir nova ocorrência</div>
+            <div style="font-size:11.5px; opacity:0.85;">Este equipamento está operando normal. Selecione o motivo do alerta para abri-lo no painel.</div>
+          </div>
+          <div class="bloco">
+            <label class="rotulo">Como está o equipamento?</label>
+            <div class="grade-status" style="grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px;">
+              <label class="opcao-status" style="--cor: var(--st-desligada); --bg: var(--st-desligada-bg);"><input type="radio" name="modal-new-status" value="DESLIGADA"><div class="opcao-status__cartao"><svg class="ico" aria-hidden="true"><use href="#i-desligada"/></svg><span>Desligada</span></div></label>
+              <label class="opcao-status" style="--cor: var(--st-peca); --bg: var(--st-peca-bg);"><input type="radio" name="modal-new-status" value="FALTA_PECA"><div class="opcao-status__cartao"><svg class="ico" aria-hidden="true"><use href="#i-peca"/></svg><span>Falta de peça</span></div></label>
+              <label class="opcao-status" style="--cor: var(--st-manutencao); --bg: var(--st-manutencao-bg);"><input type="radio" name="modal-new-status" value="MANUTENCAO" checked><div class="opcao-status__cartao"><svg class="ico" aria-hidden="true"><use href="#i-manutencao"/></svg><span>Manutenção</span></div></label>
+              <label class="opcao-status" style="--cor: var(--st-desmob); --bg: var(--st-desmob-bg);"><input type="radio" name="modal-new-status" value="DESMOBILIZACAO"><div class="opcao-status__cartao"><svg class="ico" aria-hidden="true"><use href="#i-caminhao"/></svg><span>Desmobilização</span></div></label>
+              <label class="opcao-status" style="--cor: var(--st-mob); --bg: var(--st-mob-bg);"><input type="radio" name="modal-new-status" value="MOBILIZACAO"><div class="opcao-status__cartao"><svg class="ico" aria-hidden="true"><use href="#i-caminhao"/></svg><span>Mobilização</span></div></label>
+              <label class="opcao-status" style="--cor: var(--st-alarme); --bg: var(--st-alarme-bg);"><input type="radio" name="modal-new-status" value="ALARME"><div class="opcao-status__cartao"><svg class="ico" aria-hidden="true"><use href="#i-alarme"/></svg><span>Histórico de alarme</span></div></label>
+            </div>
+            <label class="rotulo" for="modal-new-issue-text">O que aconteceu / Relato do problema</label>
+            <textarea id="modal-new-issue-text" class="campo-texto" rows="4" placeholder="Descreva o problema encontrado, motivo do alerta ou necessidade de intervenção..."></textarea>
+          </div>
         </div>
-        <div class="bloco" id="modal-andamento"><h4>Andamento</h4><ul id="modal-timeline" class="linha-tempo"></ul></div>
-        <div class="bloco">
-          <h4>Nova etapa</h4>
-          <div id="modal-etapas" class="etapas"></div>
-          <select id="modal-action-stage" class="hidden" aria-hidden="true">
-            <option value="REGISTRADO">Ocorrência registrada / em análise</option>
-            <option value="PECA_SOLICITADA">Peça solicitada ao fornecedor</option>
-            <option value="TECNICO_AGENDADO">Manutenção em andamento</option>
-            <option value="DESMOBILIZACAO_AGENDADA">Agendada a desmobilização do equipamento (retorno à fábrica)</option>
-            <option value="MOBILIZACAO_AGENDADA">Agendada a mobilização do equipamento (envio ao cliente)</option>
-            <option value="RESOLVIDO">Problema resolvido (dar baixa / ocultar da exceção)</option>
-          </select>
-        </div>
-        <p id="aviso-sem-permissao" class="nota-topo hidden"><svg class="ico" aria-hidden="true"><use href="#i-cadeado"/></svg><span>Esta ocorrência é de outro técnico. Você pode ver, mas só o técnico responsável ou o master atualiza.</span></p>
-        <div class="bloco">
-          <label class="rotulo" for="modal-action-note">Nota de acompanhamento / próximo passo</label>
-          <textarea id="modal-action-note" class="campo-texto" rows="3" placeholder="Ex.: equipamento será desmobilizado no dia 13/10/2026. Logística agendada."></textarea>
+
+        <!-- BLOCO PARA DAR ANDAMENTO (QUANDO JÁ POSSUI OCORRÊNCIA ATIVA) -->
+        <div id="modal-bloco-existente">
+          <div class="bloco">
+            <h4>O que o técnico relatou</h4>
+            <p id="modal-issue-desc" class="texto-oc">--</p>
+            <div id="modal-reporter-info" class="quando"><span id="modal-reporter-text">--</span><span id="modal-last-update-text">--</span></div>
+          </div>
+          <div class="bloco" id="modal-andamento"><h4>Andamento</h4><ul id="modal-timeline" class="linha-tempo"></ul></div>
+          <div class="bloco">
+            <h4>Nova etapa</h4>
+            <div id="modal-etapas" class="etapas"></div>
+            <select id="modal-action-stage" class="hidden" aria-hidden="true">
+              <option value="REGISTRADO">Ocorrência registrada / em análise</option>
+              <option value="PECA_SOLICITADA">Peça solicitada ao fornecedor</option>
+              <option value="TECNICO_AGENDADO">Manutenção em andamento</option>
+              <option value="DESMOBILIZACAO_AGENDADA">Agendada a desmobilização do equipamento (retorno à fábrica)</option>
+              <option value="MOBILIZACAO_AGENDADA">Agendada a mobilização do equipamento (envio ao cliente)</option>
+              <option value="RESOLVIDO">Problema resolvido (dar baixa / ocultar da exceção)</option>
+            </select>
+          </div>
+          <div class="bloco">
+            <label class="rotulo" for="modal-action-note">Nota de acompanhamento / próximo passo</label>
+            <textarea id="modal-action-note" class="campo-texto" rows="3" placeholder="Ex.: equipamento será desmobilizado no dia 13/10/2026. Logística agendada."></textarea>
+          </div>
         </div>
       </div>
       <div class="gaveta__pe">
-        <button class="btn btn--perigo so-master-acao" onclick="promptDeleteOccurrenceFromModal()" title="Excluir ocorrência aberta por engano (só o master, com a própria senha)"><svg class="ico" aria-hidden="true"><use href="#i-lixo"/></svg>Excluir lançamento</button>
+        <button class="btn btn--perigo so-master-acao" onclick="promptDeleteOccurrenceFromModal()" title="Excluir ocorrência aberta por engano (só o master)"><svg class="ico" aria-hidden="true"><use href="#i-lixo"/></svg>Excluir lançamento</button>
         <button class="btn btn--claro" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn--primario hidden" id="btn-criar-ocorrencia" onclick="createOccurrenceFromModal()"><svg class="ico" aria-hidden="true"><use href="#i-enviar"/></svg>Abrir ocorrência</button>
         <button class="btn btn--primario" id="btn-salvar-etapa" onclick="saveControllerAction()"><svg class="ico" aria-hidden="true"><use href="#i-ok"/></svg>Salvar etapa</button>
       </div>
     </aside>
@@ -1135,7 +1162,9 @@ select:disabled { opacity: .75; cursor: not-allowed; }
   <script>
 
     // CLOUD DATABASE URL (Netlify Functions)
-    const CLOUD_DB_URL = '/.netlify/functions/sync';
+    const CLOUD_DB_URL = window.location.hostname.includes('netlify.app') 
+      ? '/.netlify/functions/sync' 
+      : 'https://gestao-equipamentos-br.netlify.app/.netlify/functions/sync';
 
     const INITIAL_EQUIPMENTS = [
       // Técnico João (15)
@@ -1494,63 +1523,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       localStorage.setItem('fleet_v9_catalog', JSON.stringify(catalog));
     }
 
-    const INITIAL_OCCURRENCES = [
-      {
-        id: 'EQP-328-137', // Cauê - JOAO-ROCHE
-        status: 'MANUTENCAO',
-        issue: 'Agendado para verificação da comunicação do equipamento no portal técnico e transmissão do inversor.',
-        reporter: 'Técnico Cauê',
-        reportedAt: '2026-10-08T09:00:00.000Z',
-        actionStage: 'REGISTRADO',
-        actionNote: 'Cauê abriu uma ocorrência',
-        lastActionAt: '2026-10-08T09:00:00.000Z',
-        lastUpdatedBy: 'Técnico Cauê'
-      },
-      {
-        id: 'EQP-416-276', // Cauê - PINH-INSTITUTO
-        status: 'MANUTENCAO',
-        issue: 'Agendado para verificação da bomba de recalque e sensor de nível.',
-        reporter: 'Técnico Cauê',
-        reportedAt: '2026-10-12T14:30:00.000Z',
-        actionStage: 'TECNICO_AGENDADO',
-        actionNote: 'Técnico agendado para visita no cliente.',
-        lastActionAt: '2026-10-12T14:30:00.000Z',
-        lastUpdatedBy: 'Técnico Cauê'
-      },
-      {
-        id: 'EQP-388-193', // Otávio - LIME-MAHLE
-        status: 'MANUTENCAO',
-        issue: 'Ruído incomum no redutor durante ciclo de agitação. Programada troca de rolamentos.',
-        reporter: 'Técnico Otávio',
-        reportedAt: '2026-10-14T11:20:00.000Z',
-        actionStage: 'PECA_SOLICITADA',
-        actionNote: 'Solicitada peça sobressalente.',
-        lastActionAt: '2026-10-14T11:20:00.000Z',
-        lastUpdatedBy: 'Técnico Otávio'
-      },
-      {
-        id: 'EQP-343-127', // Antônio - 01 JAPA-RESORT
-        status: 'DESLIGADA',
-        issue: 'Equipamento desligado temporariamente para manutenção estrutural da casa de bombas do cliente.',
-        reporter: 'Técnico Antônio',
-        reportedAt: '2026-10-16T12:00:00.000Z',
-        actionStage: 'REGISTRADO',
-        actionNote: 'Antônio abriu uma ocorrência',
-        lastActionAt: '2026-10-16T12:00:00.000Z',
-        lastUpdatedBy: 'Técnico Antônio'
-      },
-      {
-        id: 'EQP-343-186', // Antônio - 02 JAPA-RESORT
-        status: 'DESLIGADA',
-        issue: 'Maquina Desligada.\nReforma do cliente para adequação da ETE, estão aguardando uma tela para a rede da ETE com previsão de chegada na segunda quinzena de Dezembro. Provavel reinstalação em Janeiro de 2027.',
-        reporter: 'Técnico Antônio',
-        reportedAt: '2026-10-16T12:10:00.000Z',
-        actionStage: 'REGISTRADO',
-        actionNote: 'Antônio abriu uma ocorrência',
-        lastActionAt: '2026-10-16T12:10:00.000Z',
-        lastUpdatedBy: 'Técnico Antônio'
-      }
-    ];
+    const INITIAL_OCCURRENCES = [];
 
     function generateDataset() {
       const list = [];
@@ -1701,6 +1674,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         renderControllerView();
         renderMachinesCatalogView();
         renderEmailPreview();
+        renderTechBreakdown();
       }
     }
 
@@ -1720,25 +1694,47 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       }
     }
 
-    async function pushCloudData() {
+    async function pushCloudData(opts = {}) {
       writeVersion++;
       lastLocalWriteAt = Date.now();
       saveLocalCache();
 
       const nowIso = new Date().toISOString();
-      const changes = [];
+      const changesMap = new Map();
+
+      // Detecção de mudanças em relação ao snapshot da nuvem
       machinesData.forEach(m => {
         const known = cloudSnapshot[m.id] || 'NORMAL';
         if (occFingerprint(m) !== known) {
-          m.updatedAt = nowIso;
-          changes.push({ ...m });
+          m.updatedAt = m.updatedAt || nowIso;
+          changesMap.set(m.id, { ...m });
         }
       });
+
+      // Mudanças diretas fornecidas
+      if (opts.directChanges && Array.isArray(opts.directChanges)) {
+        opts.directChanges.forEach(m => {
+          m.updatedAt = m.updatedAt || nowIso;
+          changesMap.set(m.id, { ...m });
+        });
+      }
+
+      const changes = Array.from(changesMap.values());
+      const deletions = Array.isArray(opts.deletions) ? [...opts.deletions] : [];
+
+      // Qualquer mudança com status NORMAL entra imediatamente em deletions
+      changes.forEach(c => {
+        if (c.status === 'NORMAL' && !deletions.includes(c.id)) {
+          deletions.push(c.id);
+        }
+      });
+
       const historyAdd = historyLogs.filter(h => !cloudHistoryIds.has(h.id));
       const usersJson = JSON.stringify(usersData);
       const payload = { 
         data: { 
           changes, 
+          deletions,
           historyAdd,
           catalog: machinesData.map(m => ({
             clientName: m.clientName,
@@ -1759,7 +1755,14 @@ select:disabled { opacity: .75; cursor: not-allowed; }
           body: JSON.stringify(payload)
         });
         if (response.ok) {
-          changes.forEach(c => { cloudSnapshot[c.id] = occFingerprint(c); });
+          changes.forEach(c => {
+            if (c.status === 'NORMAL') {
+              delete cloudSnapshot[c.id];
+            } else {
+              cloudSnapshot[c.id] = occFingerprint(c);
+            }
+          });
+          deletions.forEach(id => { delete cloudSnapshot[id]; });
           historyAdd.forEach(h => cloudHistoryIds.add(h.id));
           if (payload.data.users) cloudUsersJson = usersJson;
           setCloudBadgeStatus(true);
@@ -2529,34 +2532,48 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       const m = machinesData.find(x => x.id === equipId);
       if (!m) return;
 
+      const isNormal = (status === 'NORMAL');
+      const nowIso = new Date().toISOString();
       m.status = status;
-      m.issue = notes;
       m.reporter = authorName;
-      m.reportedAt = new Date().toISOString();
-      m.lastActionAt = m.reportedAt;
+      m.reportedAt = isNormal ? null : nowIso;
+      m.lastActionAt = nowIso;
       m.lastUpdatedBy = authorName;
-      m.actionStage = 'REGISTRADO';
-      m.actionNote = 'Ocorrência registrada pelo técnico no campo.';
-      if (!m.updates) m.updates = [];
-      m.updates.unshift({
-        author: authorName,
-        timestamp: m.reportedAt,
-        stage: 'REGISTRADO',
-        note: notes
-      });
+      m.updatedAt = nowIso;
+
+      if (isNormal) {
+        m.issue = null;
+        m.actionStage = 'REGISTRADO';
+        m.actionNote = '';
+        m.updates = [];
+        delete cloudSnapshot[m.id];
+      } else {
+        m.issue = notes;
+        m.actionStage = 'REGISTRADO';
+        m.actionNote = 'Ocorrência registrada pelo técnico no campo.';
+        if (!m.updates) m.updates = [];
+        m.updates.unshift({
+          author: authorName,
+          timestamp: m.reportedAt,
+          stage: 'REGISTRADO',
+          note: notes
+        });
+      }
 
       addHistoryLog({
-        action: 'NOVA_OCORRENCIA',
+        action: isNormal ? 'BAIXA' : 'NOVA_OCORRENCIA',
         author: authorName,
         equipId: m.id,
         clientName: m.clientName,
         clientCode: m.clientCode,
         equipNumber: m.equipNumber,
-        details: `Ocorrência aberta no campo por ${authorName}: ${notes}`
+        details: isNormal 
+          ? `Baixa no campo por ${authorName}. Máquina operando normal.`
+          : `Ocorrência aberta no campo por ${authorName}: ${notes}`
       });
 
       saveLocalCache();
-      await pushCloudData();
+      await pushCloudData(isNormal ? { directChanges: [m], deletions: [m.id] } : { directChanges: [m] });
 
       document.getElementById('mobile-notes').value = '';
       deselecionarEquipamento();
@@ -2567,7 +2584,10 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       }
       renderControllerView();
       renderMobileEquipList();
-      alert('✅ Ocorrência registrada com sucesso na nuvem!');
+      renderTechBreakdown();
+      if (confirm('✅ Ocorrência registrada com sucesso na nuvem!\n\nDeseja ir para o Painel para acompanhar?')) {
+        switchView('controller');
+      }
     }
 
     // =========================================================================
@@ -2581,22 +2601,6 @@ select:disabled { opacity: .75; cursor: not-allowed; }
 
       document.getElementById('modal-machine-title').textContent = m.clientName;
       document.getElementById('modal-machine-sub').innerHTML = `<span>EQP ${m.equipNumber}</span><span>Cód. ${m.clientCode}</span><span>${ic('local')}${m.state}</span><span>${ic('pessoa')}${m.tech}</span>`;
-      document.getElementById('modal-issue-desc').textContent = m.issue || (m.status === 'NORMAL' ? 'Equipamento operando normalmente, sem falhas registradas.' : 'Sem descrição.');
-
-      const reportedDate = formatDateTime(m.reportedAt);
-      const lastUpdatedDate = formatDateTime(m.lastActionAt || m.reportedAt);
-      const updatedBy = m.lastUpdatedBy || m.reporter || m.tech;
-
-      const reporterInfo = document.getElementById('modal-reporter-info');
-      if (reporterInfo) {
-        if (m.status !== 'NORMAL' && m.reportedAt) {
-          reporterInfo.style.display = 'flex';
-          document.getElementById('modal-reporter-text').innerHTML = `<b>Abertura:</b> ${m.reporter || m.tech} em ${reportedDate}`;
-          document.getElementById('modal-last-update-text').innerHTML = `<b>Última alteração de status:</b> ${updatedBy} em ${lastUpdatedDate}`;
-        } else {
-          reporterInfo.style.display = 'none';
-        }
-      }
 
       const badge = document.getElementById('modal-status-badge');
       if (badge) {
@@ -2604,9 +2608,52 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         badge.innerHTML = `${ic((ST_INFO[m.status] || {}).ico || 'alerta')}${(ST_INFO[m.status] || {}).nome || m.status}`;
       }
 
-      const slaEl = document.getElementById('modal-sla');
-      if (slaEl) {
-        if (m.status !== 'NORMAL') {
+      const isNormal = (m.status === 'NORMAL');
+      const blocoNovaOc = document.getElementById('modal-bloco-nova-oc');
+      const blocoExistente = document.getElementById('modal-bloco-existente');
+      const btnSalvarEtapa = document.getElementById('btn-salvar-etapa');
+      const btnCriarOc = document.getElementById('btn-criar-ocorrencia');
+      const delBtn = document.querySelector('.gaveta__pe .btn--perigo');
+
+      if (isNormal) {
+        if (blocoNovaOc) blocoNovaOc.classList.remove('hidden');
+        if (blocoExistente) blocoExistente.classList.add('hidden');
+        if (btnSalvarEtapa) btnSalvarEtapa.classList.add('hidden');
+        if (btnCriarOc) btnCriarOc.classList.remove('hidden');
+        if (delBtn) delBtn.classList.add('hidden');
+
+        const slaEl = document.getElementById('modal-sla');
+        if (slaEl) slaEl.style.display = 'none';
+
+        const newIssueInput = document.getElementById('modal-new-issue-text');
+        if (newIssueInput) newIssueInput.value = '';
+        const defRadio = document.querySelector('input[name="modal-new-status"][value="MANUTENCAO"]');
+        if (defRadio) defRadio.checked = true;
+      } else {
+        if (blocoNovaOc) blocoNovaOc.classList.add('hidden');
+        if (blocoExistente) blocoExistente.classList.remove('hidden');
+        if (btnSalvarEtapa) btnSalvarEtapa.classList.remove('hidden');
+        if (btnCriarOc) btnCriarOc.classList.add('hidden');
+        if (delBtn) {
+          if (currentUser && currentUser.role === 'MASTER') delBtn.classList.remove('hidden');
+          else delBtn.classList.add('hidden');
+        }
+
+        document.getElementById('modal-issue-desc').textContent = m.issue || 'Sem descrição.';
+
+        const reportedDate = formatDateTime(m.reportedAt);
+        const lastUpdatedDate = formatDateTime(m.lastActionAt || m.reportedAt);
+        const updatedBy = m.lastUpdatedBy || m.reporter || m.tech;
+
+        const reporterInfo = document.getElementById('modal-reporter-info');
+        if (reporterInfo) {
+          reporterInfo.style.display = 'flex';
+          document.getElementById('modal-reporter-text').innerHTML = `<b>Abertura:</b> ${m.reporter || m.tech} em ${reportedDate}`;
+          document.getElementById('modal-last-update-text').innerHTML = `<b>Última alteração de status:</b> ${updatedBy} em ${lastUpdatedDate}`;
+        }
+
+        const slaEl = document.getElementById('modal-sla');
+        if (slaEl) {
           const hAgo = getHoursAgo(m.lastActionAt || m.reportedAt);
           const days = Math.floor(hAgo / 24);
           const remHours = hAgo % 24;
@@ -2614,21 +2661,70 @@ select:disabled { opacity: .75; cursor: not-allowed; }
           slaEl.innerHTML = `${ic('relogio')}${slaTxt}`;
           slaEl.className = 'selo ' + (hAgo >= 48 ? 'selo--critico' : 'selo--alerta');
           slaEl.style.display = 'inline-flex';
-        } else {
-          slaEl.style.display = 'none';
         }
-      }
 
-      renderEtapas(m.actionStage || 'REGISTRADO');
-      renderAndamento(m);
-
-      const delBtn = document.querySelector('.gaveta__pe .btn--vermelho');
-      if (delBtn) {
-        if (currentUser && currentUser.role === 'MASTER') delBtn.classList.remove('hidden');
-        else delBtn.classList.add('hidden');
+        renderEtapas(m.actionStage || 'REGISTRADO');
+        renderAndamento(m);
+        document.getElementById('modal-action-note').value = '';
       }
 
       document.getElementById('modal-update').classList.remove('hidden');
+    }
+
+    async function createOccurrenceFromModal() {
+      if (!currentEditingId) return;
+      const m = machinesData.find(x => x.id === currentEditingId);
+      if (!m) return;
+
+      const radio = document.querySelector('input[name="modal-new-status"]:checked');
+      const status = radio ? radio.value : 'MANUTENCAO';
+      const issue = (document.getElementById('modal-new-issue-text')?.value || '').trim();
+
+      if (!issue) {
+        alert('⚠️ Por favor, descreva o problema ou o motivo da ocorrência.');
+        document.getElementById('modal-new-issue-text')?.focus();
+        return;
+      }
+
+      const authorName = currentUser ? currentUser.name : (m.tech || 'Controlador Master');
+      const nowIso = new Date().toISOString();
+
+      m.status = status;
+      m.issue = issue;
+      m.reporter = authorName;
+      m.reportedAt = nowIso;
+      m.lastActionAt = nowIso;
+      m.lastUpdatedBy = authorName;
+      m.updatedAt = nowIso;
+      m.actionStage = 'REGISTRADO';
+      m.actionNote = 'Ocorrência registrada no painel por ' + authorName;
+      m.updates = [{
+        author: authorName,
+        timestamp: nowIso,
+        stage: 'REGISTRADO',
+        note: issue
+      }];
+
+      addHistoryLog({
+        action: 'NOVA_OCORRENCIA',
+        author: authorName,
+        equipId: m.id,
+        clientName: m.clientName,
+        clientCode: m.clientCode,
+        equipNumber: m.equipNumber,
+        details: `Ocorrência aberta no painel por ${authorName}: ${issue}`
+      });
+
+      delete cloudSnapshot[m.id];
+      saveLocalCache();
+      await pushCloudData({ directChanges: [m] });
+
+      closeModal();
+      renderControllerView();
+      renderEmailPreview();
+      renderHistoryView();
+      renderTechBreakdown();
+      alert('✅ Ocorrência inserida com sucesso na nuvem!');
     }
 
     function closeModal() {
@@ -2740,26 +2836,30 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         });
       }
 
+      const nowIso = new Date().toISOString();
       m.actionStage = newStage;
       m.actionNote = newNote;
-      m.lastActionAt = new Date().toISOString();
+      m.lastActionAt = nowIso;
       m.lastUpdatedBy = authorName;
+      m.updatedAt = nowIso;
 
       if (isBaixa) {
         m.status = 'NORMAL';
         m.issue = null;
         m.actionStage = 'REGISTRADO';
         m.actionNote = '';
+        delete cloudSnapshot[m.id];
       }
 
       saveLocalCache();
-      await pushCloudData();
+      await pushCloudData(isBaixa ? { directChanges: [m], deletions: [m.id] } : { directChanges: [m] });
 
       closeModal();
       document.getElementById('modal-action-note').value = '';
       renderControllerView();
       renderEmailPreview();
       renderHistoryView();
+      renderTechBreakdown();
       alert('✅ Atualização salva e sincronizada na nuvem!');
     }
 
@@ -2771,14 +2871,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       const m = machinesData.find(x => x.id === id);
       if (!m) return;
 
-      const pass = prompt(`🔒 RESTRITO AO CONTROLADOR MASTER\n\nInforme a SENHA MASTER (123456) para autorizar a exclusão definitiva da ocorrência:\nEQP N° ${m.equipNumber} - ${m.clientName}`);
-      if (pass === null) return;
-      if (pass.trim() !== '123456') {
-        alert('❌ Senha Master incorreta! A exclusão foi cancelada.');
-        return;
-      }
-
-      if (!confirm(`⚠️ Deseja excluir a ocorrência de ${m.clientName} (EQP ${m.equipNumber})? A máquina retornará ao status Normal.`)) return;
+      if (!confirm(`⚠️ Deseja excluir definitivamente a ocorrência de ${m.clientName} (EQP ${m.equipNumber})?\n\nO equipamento retornará ao status Normal e a pendência será removida do painel e da nuvem.`)) return;
 
       const authorName = currentUser.name || 'Controlador Master';
       addHistoryLog({
@@ -2791,6 +2884,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         details: `Ocorrência excluída por erro de lançamento por ${authorName}. Equipamento retornou ao status Normal.`
       });
 
+      const nowIso = new Date().toISOString();
       m.status = 'NORMAL';
       m.issue = null;
       m.actionStage = 'REGISTRADO';
@@ -2799,14 +2893,17 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       m.reportedAt = null;
       m.lastActionAt = null;
       m.lastUpdatedBy = null;
+      m.updatedAt = nowIso;
       m.updates = [];
 
+      delete cloudSnapshot[m.id];
       saveLocalCache();
-      await pushCloudData();
+      await pushCloudData({ directChanges: [m], deletions: [m.id] });
       renderControllerView();
       renderEmailPreview();
       renderHistoryView();
-      alert('🗑️ Ocorrência excluída com sucesso.');
+      renderTechBreakdown();
+      alert('🗑️ Ocorrência excluída com sucesso da nuvem.');
     }
 
     function promptDeleteOccurrenceFromModal() {
@@ -3434,10 +3531,6 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       if (stored) {
         try {
           machinesData = JSON.parse(stored);
-          if (machinesData.filter(m => m.status !== 'NORMAL').length === 0) {
-            machinesData = generateDataset();
-            saveLocalCache();
-          }
         } catch(e) { machinesData = generateDataset(); }
       } else {
         machinesData = generateDataset();
