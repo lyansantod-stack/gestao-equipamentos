@@ -1026,7 +1026,18 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         <form onsubmit="handleLoginSubmit(event)" class="form">
           <div>
             <label class="rotulo" for="login-user-select">Usuário</label>
-            <span class="campo-sel campo-ico"><svg class="ico" aria-hidden="true"><use href="#i-pessoa"/></svg><select id="login-user-select"></select></span>
+            <span class="campo-sel campo-ico"><svg class="ico" aria-hidden="true"><use href="#i-pessoa"/></svg><select id="login-user-select">
+                <option value="">-- Selecione o seu Usuário / Técnico --</option>
+                <option value="usr-master">🔑 Controlador Master (master)</option>
+                <option value="usr-operador">👔 Operador Geral (operador)</option>
+                <option value="usr-joao">👨‍🔧 Técnico João (joao)</option>
+                <option value="usr-caue">👨‍🔧 Técnico Cauê (caue)</option>
+                <option value="usr-anderson">👨‍🔧 Técnico Anderson (anderson)</option>
+                <option value="usr-otavio">👨‍🔧 Técnico Otávio (otavio)</option>
+                <option value="usr-antonio">👨‍🔧 Técnico Antônio (antonio)</option>
+                <option value="usr-francisco">👨‍🔧 Técnico Francisco (francisco)</option>
+                <option value="usr-bruno">👨‍🔧 Técnico Bruno (bruno)</option>
+              </select></span>
           </div>
           <div>
             <label class="rotulo" for="login-password-input">Senha</label>
@@ -3218,6 +3229,7 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         renderEmailPreview();
 
         alert(`✅ Máquina ${equipNumber} salva com sucesso e sincronizada na nuvem!`);
+      }
     }
 
     async function promptDeleteMachine(id) {
