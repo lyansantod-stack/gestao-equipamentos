@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -1189,8 +1189,8 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       { clientName: 'JOAO-ROCHE', clientCode: '328', equipNumber: '137', tech: 'Técnico Cauê', state: 'SP' },
       { clientName: '02-CHAC-CARREFOUR', clientCode: '236', equipNumber: '117', tech: 'Técnico Cauê', state: 'SP' },
       { clientName: 'MORU-IBIS', clientCode: '323', equipNumber: '124', tech: 'Técnico Cauê', state: 'SP' },
-      { clientName: 'VILA O.-INSPER', clientCode: '349', equipNumber: '192', tech: 'Técnico Cauê', state: 'SP' },
-      { clientName: 'ITAI-INSPER', clientCode: '349', equipNumber: '87', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'VILA O.-INSPER', clientCode: '349', equipNumber: '87', tech: 'Técnico Cauê', state: 'SP' },
+      { clientName: 'ITAI-INSPER', clientCode: '349', equipNumber: '192', tech: 'Técnico Cauê', state: 'SP' },
       { clientName: 'VILA 0.-PULLMAN', clientCode: '301', equipNumber: '74', tech: 'Técnico Cauê', state: 'SP' },
       { clientName: 'BUTA-FACULDADE', clientCode: '270', equipNumber: '200', tech: 'Técnico Cauê', state: 'SP' },
       { clientName: 'MORU-HOSPITAL', clientCode: '270', equipNumber: '139', tech: 'Técnico Cauê', state: 'SP' },
@@ -1657,10 +1657,12 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       });
       cloudSnapshot = newSnapshot;
 
-      const changed = newDataset.some(m => {
+      const changed = (newDataset.length !== machinesData.length) || newDataset.some(m => {
         const cur = machinesData.find(x => x.id === m.id);
+        if (!cur) return true;
+        if (cur.clientName !== m.clientName || cur.equipNumber !== m.equipNumber || cur.clientCode !== m.clientCode || cur.tech !== m.tech || cur.state !== m.state) return true;
         return occFingerprint(cur) !== occFingerprint(m);
-      }) || (newDataset.length !== machinesData.length);
+      });
 
       const newIssuesCount = newDataset.filter(m => m.status !== 'NORMAL').length;
       if (lastKnownIssueCount !== 0 && newIssuesCount > lastKnownIssueCount) {
@@ -1675,6 +1677,8 @@ select:disabled { opacity: .75; cursor: not-allowed; }
         renderMachinesCatalogView();
         renderEmailPreview();
         renderTechBreakdown();
+        populateClientFilterOptions();
+        populateMachineTechFilter();
       }
     }
 
@@ -3110,57 +3114,110 @@ select:disabled { opacity: .75; cursor: not-allowed; }
       } else {
         const m = machinesData.find(x => x.id === targetId);
         if (!m) { alert('Máquina não encontrada para edição.'); return; }
-        const oldInfo = `EQP ${m.equipNumber} (${m.clientName}) - ${m.tech}`;
-        m.clientName = clientName;
-        m.clientCode = clientCode;
-        m.equipNumber = equipNumber;
-        m.state = state;
-        m.tech = tech;
-        m.id = newId;
-        if (m.status !== status) {
-          m.status = status;
-          m.lastActionAt = new Date().toISOString();
-          m.lastUpdatedBy = authorName;
-          if (!m.updates) m.updates = [];
-          m.updates.unshift({
+
+        let directChanges = [];
+        let deletions = [];
+
+        // Verifica se há colisão de ID com outra máquina (ex: troca de números)
+        const duplicate = machinesData.find(x => x.id === newId && x.id !== targetId);
+        if (duplicate) {
+          const wantSwap = confirm(`⚠️ O número EQP ${equipNumber} já pertence à máquina [${duplicate.clientName}].\n\nDeseja INVERTER os números dos equipamentos entre [${m.clientName}] e [${duplicate.clientName}]?`);
+          if (!wantSwap) return;
+
+          const oldEqp = m.equipNumber;
+          const oldTargetId = targetId;
+          const oldDupId = duplicate.id;
+
+          // Inverte no duplicate
+          duplicate.equipNumber = oldEqp;
+          duplicate.id = `EQP-${duplicate.clientCode}-${oldEqp}`;
+          duplicate.updatedAt = new Date().toISOString();
+
+          // Atualiza m
+          m.clientName = clientName;
+          m.clientCode = clientCode;
+          m.equipNumber = equipNumber;
+          m.state = state;
+          m.tech = tech;
+          m.id = newId;
+          m.updatedAt = new Date().toISOString();
+
+          delete cloudSnapshot[oldTargetId];
+          delete cloudSnapshot[oldDupId];
+
+          deletions.push(oldTargetId, oldDupId);
+          directChanges.push(m, duplicate);
+
+          addHistoryLog({
+            action: 'GESTAO_USUARIO',
             author: authorName,
-            timestamp: new Date().toISOString(),
-            stage: m.actionStage || 'REGISTRADO',
-            note: `Status alterado na edição cadastral da máquina para ${status}.`
+            equipId: newId,
+            clientName: clientName,
+            clientCode: clientCode,
+            equipNumber: equipNumber,
+            details: `🔄 NÚMEROS INVERTIDOS: [${m.clientName}] agora é EQP ${equipNumber} e [${duplicate.clientName}] agora é EQP ${oldEqp}.`
+          });
+        } else {
+          const oldInfo = `EQP ${m.equipNumber} (${m.clientName}) - ${m.tech}`;
+          if (targetId !== newId) {
+            delete cloudSnapshot[targetId];
+            deletions.push(targetId);
+          }
+
+          m.clientName = clientName;
+          m.clientCode = clientCode;
+          m.equipNumber = equipNumber;
+          m.state = state;
+          m.tech = tech;
+          m.id = newId;
+          m.updatedAt = new Date().toISOString();
+
+          if (m.status !== status) {
+            m.status = status;
+            m.lastActionAt = new Date().toISOString();
+            m.lastUpdatedBy = authorName;
+            if (!m.updates) m.updates = [];
+            m.updates.unshift({
+              author: authorName,
+              timestamp: new Date().toISOString(),
+              stage: m.actionStage || 'REGISTRADO',
+              note: `Status alterado na edição cadastral da máquina para ${status}.`
+            });
+          }
+
+          directChanges.push(m);
+
+          addHistoryLog({
+            action: 'GESTAO_USUARIO',
+            author: authorName,
+            equipId: newId,
+            clientName: clientName,
+            clientCode: clientCode,
+            equipNumber: equipNumber,
+            details: `✏️ DADOS DA MÁQUINA EDITADOS: de [${oldInfo}] para [EQP ${equipNumber} (${clientName}) - ${tech} - ${status}].`
           });
         }
 
-        addHistoryLog({
-          action: 'GESTAO_USUARIO',
-          author: authorName,
-          equipId: newId,
-          clientName: clientName,
-          clientCode: clientCode,
-          equipNumber: equipNumber,
-          details: `✏️ DADOS DA MÁQUINA EDITADOS: de [${oldInfo}] para [EQP ${equipNumber} (${clientName}) - ${tech} - ${status}].`
-        });
-      }
+        saveCatalogList(machinesData.map(m => ({
+          clientName: m.clientName,
+          clientCode: m.clientCode,
+          equipNumber: m.equipNumber,
+          tech: m.tech,
+          state: m.state || 'SP'
+        })));
 
-      saveCatalogList(machinesData.map(m => ({
-        clientName: m.clientName,
-        clientCode: m.clientCode,
-        equipNumber: m.equipNumber,
-        tech: m.tech,
-        state: m.state || 'SP'
-      })));
+        closeMachineModal();
+        saveLocalCache();
+        await pushCloudData({ directChanges, deletions });
 
-      closeMachineModal();
-      saveLocalCache();
-      await pushCloudData();
+        populateMachineTechFilter();
+        populateClientFilterOptions();
+        renderTechBreakdown();
+        renderMachinesCatalogView();
+        renderControllerView();
+        renderEmailPreview();
 
-      populateMachineTechFilter();
-      populateClientFilterOptions();
-      renderTechBreakdown();
-      renderMachinesCatalogView();
-      renderControllerView();
-      renderEmailPreview();
-
-      alert(`✅ Máquina ${equipNumber} salva com sucesso e sincronizada na nuvem!`);
+        alert(`✅ Máquina ${equipNumber} salva com sucesso e sincronizada na nuvem!`);
     }
 
     async function promptDeleteMachine(id) {
